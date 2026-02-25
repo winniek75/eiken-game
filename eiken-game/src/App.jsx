@@ -308,6 +308,34 @@ const GAME_STATES={MENU:'menu',PLAYING:'playing',RESULT:'result',IDIOM_MENU:'idi
 const gradeColors={5:'#00d9ff',4:'#ffd93d',3:'#ff6b9d'};
 const optLabels=['A','B','C','D'];
 
+// ======== ユーティリティ（音声再生）========
+const playSound = (text, lang = 'en-US') => {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = 0.9;
+  utterance.pitch = 1.0;
+  speechSynthesis.speak(utterance);
+};
+
+const playErrorSound = () => {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.type = 'square';
+  oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.1);
+
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.2);
+};
+
 // ======== 共有コンポーネント ========
 const Mascot=({emotion='happy',message=''})=>{
   const faces={happy:'(◕‿◕)',excited:'(★‿★)',thinking:'(◔_◔)',sad:'(╥_╥)'};
@@ -357,9 +385,9 @@ const GameScreen=({grade,onGameEnd,onExit})=>{
   useEffect(()=>{if(!questions.length)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswer(-1);return 15;}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
   const handleAnswer=useCallback((si)=>{
     if(fb!==null)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
-    if(ok){const pts=100+Math.floor(timeLeft*10)+combo*50;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});const ms=['すごい！','ナイス！','完璧！','その調子！','天才！'];setMm(ms[Math.floor(Math.random()*ms.length)]);setMe(combo>=2?'excited':'happy');}
-    else{setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');}
-    setTimeout(()=>{setFb(null);setShowHint(false);setMe('thinking');setMm('');if(ci+1>=questions.length){onGameEnd({score:ok?score+100+Math.floor(timeLeft*10)+combo*50:score,correctCount:ok?cc+1:cc,maxCombo:Math.max(maxCombo,ok?combo+1:maxCombo),totalQuestions:questions.length});}else{setCi(p=>p+1);setTimeLeft(15);}},1500);
+    if(ok){const pts=100+Math.floor(timeLeft*10)+combo*50;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});const ms=['すごい！','ナイス！','完璧！','その調子！','天才！'];setMm(ms[Math.floor(Math.random()*ms.length)]);setMe(combo>=2?'excited':'happy');playSound(cq.options[cq.answer]);}
+    else{setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(cq.options[cq.answer]),500);}
+    setTimeout(()=>{setFb(null);setShowHint(false);setMe('thinking');setMm('');if(ci+1>=questions.length){onGameEnd({score:ok?score+100+Math.floor(timeLeft*10)+combo*50:score,correctCount:ok?cc+1:cc,maxCombo:Math.max(maxCombo,ok?combo+1:maxCombo),totalQuestions:questions.length});}else{setCi(p=>p+1);setTimeLeft(15);}},ok?1500:3000);
   },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd]);
   if(!questions.length)return<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   const cq=questions[ci];const prog=((ci+1)/questions.length)*100;const tc=timeLeft<=5?'#ff6b6b':timeLeft<=10?'#ffd93d':'#6bff8e';
@@ -385,7 +413,7 @@ const GameScreen=({grade,onGameEnd,onExit})=>{
         </div>
         <div className="flex flex-col items-center gap-5 md:order-none order-first"><Mascot emotion={me} message={mm}/>{combo>=2&&<div className="px-5 py-3 rounded-xl flex flex-col items-center" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}}><span className="text-xs text-white/80">COMBO</span><span className="text-2xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>×{combo}</span></div>}</div>
       </div>
-      {fb&&<div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"><div className="flex flex-col items-center gap-3" style={{animation:'pop 0.3s ease'}}><div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl font-bold" style={{background:fb.type==='correct'?'#6bff8e':'#ff6b6b',color:fb.type==='correct'?'#1a1a2e':'white',boxShadow:`0 0 40px ${fb.type==='correct'?'rgba(107,255,142,0.6)':'rgba(255,107,107,0.6)'}`}}>{fb.type==='correct'?'✓':'✗'}</div><span className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'正解!':'不正解...'}</span>{fb.type==='correct'?<span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>+{fb.points}pt</span>:<span className="text-lg text-gray-400">正解: {fb.correctAnswer}</span>}</div></div>}
+      {fb&&<div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"><div className="flex flex-col items-center gap-3" style={{animation:'pop 0.3s ease'}}><div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl font-bold" style={{background:fb.type==='correct'?'#6bff8e':'#ff6b6b',color:fb.type==='correct'?'#1a1a2e':'white',boxShadow:`0 0 40px ${fb.type==='correct'?'rgba(107,255,142,0.6)':'rgba(255,107,107,0.6)'}`}}>{fb.type==='correct'?'✓':'✗'}</div><span className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'正解!':'不正解...'}</span>{fb.type==='correct'?<span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>+{fb.points}pt</span>:<div className="flex flex-col items-center gap-2 mt-2" style={{animation:'slideUp 0.3s ease 0.2s both'}}><span className="text-sm text-gray-400">正解は</span><span className="text-2xl px-6 py-3 rounded-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e',background:'rgba(107,255,142,0.15)',border:'2px solid #6bff8e',boxShadow:'0 0 20px rgba(107,255,142,0.3)'}}>{fb.correctAnswer}</span></div>}</div></div>}
     </div>
   );
 };
@@ -447,7 +475,7 @@ const IdiomMenu=({onStartLearn,onStartTest,onBack})=>{
 // ======== 熟語学習モード ========
 const IdiomLearnMode=({grade,onExit,onFinish})=>{
   const idiomData=getIdiomByGrade(grade);
-  const[batch,setBatch]=useState(0);const[phase,setPhase]=useState('flash');const[cardIdx,setCardIdx]=useState(0);const[flipped,setFlipped]=useState(false);const[qi,setQi]=useState(0);const[qfb,setQfb]=useState(null);const[bScore,setBScore]=useState(0);const[tScore,setTScore]=useState(0);const[tCorrect,setTCorrect]=useState(0);const[tQ,setTQ]=useState(0);const[showExit,setShowExit]=useState(false);const[autoPlay,setAutoPlay]=useState(false);const autoRef=useRef(null);
+  const[batch,setBatch]=useState(0);const[phase,setPhase]=useState('flash');const[cardIdx,setCardIdx]=useState(0);const[flipped,setFlipped]=useState(false);const[qi,setQi]=useState(0);const[qfb,setQfb]=useState(null);const[bScore,setBScore]=useState(0);const[tScore,setTScore]=useState(0);const[tCorrect,setTCorrect]=useState(0);const[tQ,setTQ]=useState(0);const[showExit,setShowExit]=useState(false);const[autoPlay,setAutoPlay]=useState(false);const autoRef=useRef(null);const lastPlayedIdx=useRef(-1);
   const color=gradeColors[grade];const BS=5;
   const shuffledRef=useRef(shuffleArray(idiomData));const shuffled=shuffledRef.current;
   const totalBatches=Math.ceil(shuffled.length/BS);const curItems=shuffled.slice(batch*BS,(batch+1)*BS);
@@ -462,20 +490,40 @@ const IdiomLearnMode=({grade,onExit,onFinish})=>{
     }
   },[phase,autoPlay,flipped,cardIdx,curItems.length]);
 
-  const handleNextCard=()=>{if(!flipped){setFlipped(true);return;}if(cardIdx<curItems.length-1){setCardIdx(p=>p+1);setFlipped(false);}else{setPhase('quiz');setQi(0);setBScore(0);}};
+  useEffect(()=>{
+    if(phase==='flash'&&!flipped&&curItems[cardIdx]){
+      const currentKey=`${batch}-${cardIdx}`;
+      if(lastPlayedIdx.current!==currentKey){
+        playSound(curItems[cardIdx].phrase);
+        lastPlayedIdx.current=currentKey;
+      }
+    }
+  },[phase,cardIdx,flipped,batch]);
 
-  const getOpts=(item)=>{const others=idiomData.filter(i=>i.phrase!==item.phrase);return shuffleArray([item.meaning,...shuffleArray(others).slice(0,3).map(i=>i.meaning)]);};
+  const handleNextCard=()=>{if(!flipped){setFlipped(true);return;}if(cardIdx<curItems.length-1){setCardIdx(p=>p+1);setFlipped(false);}else{setPhase('quiz');setQi(0);setBScore(0);setQuizOptions({});}};
+
+  const[quizOptions,setQuizOptions]=useState({});
+  const getOpts=(item)=>{
+    if(!quizOptions[item.phrase]){
+      const others=idiomData.filter(i=>i.phrase!==item.phrase);
+      const opts=shuffleArray([item.meaning,...shuffleArray(others).slice(0,3).map(i=>i.meaning)]);
+      setQuizOptions(prev=>({...prev,[item.phrase]:opts}));
+      return opts;
+    }
+    return quizOptions[item.phrase];
+  };
 
   const handleQuizAns=(sel)=>{
     if(qfb)return;const item=curItems[qi];const ok=sel===item.meaning;
-    if(ok){setBScore(p=>p+1);setTCorrect(p=>p+1);}
-    setTQ(p=>p+1);setQfb({correct:ok,answer:item.meaning});
-    setTimeout(()=>{setQfb(null);if(qi<curItems.length-1){setQi(p=>p+1);}else{setTScore(p=>p+bScore+(ok?1:0));setPhase('batchResult');}},1200);
+    if(ok){setBScore(p=>p+1);setTCorrect(p=>p+1);playSound(item.phrase);}
+    else{playErrorSound();setTimeout(()=>playSound(item.phrase),500);}
+    setTQ(p=>p+1);setQfb({correct:ok,answer:item.meaning,selected:sel});
+    setTimeout(()=>{setQfb(null);if(qi<curItems.length-1){setQi(p=>p+1);}else{setTScore(p=>p+bScore+(ok?1:0));setPhase('batchResult');}},ok?1500:3000);
   };
 
   const handleNextBatch=()=>{
     if(batch+1>=totalBatches){onFinish({score:tScore*100,correctCount:tCorrect,totalQuestions:tQ,maxCombo:0});return;}
-    setBatch(p=>p+1);setPhase('flash');setCardIdx(0);setFlipped(false);setBScore(0);
+    setBatch(p=>p+1);setPhase('flash');setCardIdx(0);setFlipped(false);setBScore(0);setQuizOptions({});lastPlayedIdx.current=-1;
   };
 
   const prog=((batch*BS+(phase==='flash'?cardIdx:BS))/shuffled.length)*100;
@@ -496,6 +544,7 @@ const IdiomLearnMode=({grade,onExit,onFinish})=>{
           <div className="flex items-center gap-3 mb-2">
             <span className="text-sm text-gray-400">カード {cardIdx+1}/{curItems.length}</span>
             <div className="flex gap-1">{curItems.map((_,i)=>(<div key={i} className="w-3 h-3 rounded-full transition-all" style={{background:i<=cardIdx?color:'#374151',boxShadow:i===cardIdx?`0 0 10px ${color}`:'none'}}/>))}</div>
+            <button className="ml-2 p-1 rounded-lg hover:bg-white/10 transition-all" onClick={(e)=>{e.stopPropagation();if(curItems[cardIdx])playSound(curItems[cardIdx].phrase);}}><span className="text-xl">🔊</span></button>
           </div>
           <div className="w-full" style={{perspective:'1000px'}}>
             <div className="relative w-full cursor-pointer" style={{minHeight:'280px',transformStyle:'preserve-3d',transform:flipped?'rotateY(180deg)':'rotateY(0deg)',transition:'transform 0.6s cubic-bezier(0.4,0,0.2,1)'}} onClick={handleNextCard}>
@@ -537,10 +586,11 @@ const IdiomLearnMode=({grade,onExit,onFinish})=>{
           <div className="grid grid-cols-1 gap-3 w-full">
             {getOpts(curItems[qi]).map((opt,i)=>{
               const isCA=qfb&&opt===curItems[qi].meaning;
-              return(<button key={i} className="w-full p-4 rounded-xl text-lg text-left transition-all hover:-translate-y-1 font-bold" style={{background:isCA?'rgba(107,255,142,0.2)':'rgba(37,37,66,0.9)',border:`2px solid ${isCA?'#6bff8e':'#374151'}`,color:isCA?'#6bff8e':'white',opacity:qfb&&!isCA?0.5:1}} onClick={()=>handleQuizAns(opt)} disabled={qfb!==null}>{opt}</button>);
+              const isWA=qfb&&opt===qfb.selected&&!qfb.correct;
+              return(<button key={i} className="w-full p-4 rounded-xl text-lg text-left transition-all font-bold" style={{background:isCA?'rgba(107,255,142,0.2)':isWA?'rgba(255,107,107,0.2)':'rgba(37,37,66,0.9)',border:`2px solid ${isCA?'#6bff8e':isWA?'#ff6b6b':'#374151'}`,color:isCA?'#6bff8e':isWA?'#ff6b6b':'white',opacity:qfb&&!isCA&&!isWA?0.5:1,transform:'none'}} onClick={()=>handleQuizAns(opt)} disabled={qfb!==null}>{opt}</button>);
             })}
           </div>
-          {qfb&&<div className="text-2xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:qfb.correct?'#6bff8e':'#ff6b6b',animation:'pop 0.3s ease'}}>{qfb.correct?'⭕ 正解！':'❌ 不正解…'}</div>}
+          {qfb&&<div className="flex flex-col items-center gap-3" style={{animation:'pop 0.3s ease'}}><div className="text-2xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:qfb.correct?'#6bff8e':'#ff6b6b'}}>{qfb.correct?'⭕ 正解！':'❌ 不正解…'}</div>{!qfb.correct&&<div className="flex flex-col items-center gap-2" style={{animation:'slideUp 0.3s ease 0.3s both'}}><span className="text-sm text-gray-400">正解は</span><span className="text-xl px-5 py-2 rounded-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e',background:'rgba(107,255,142,0.15)',border:'2px solid #6bff8e',boxShadow:'0 0 20px rgba(107,255,142,0.3)'}}>{qfb.answer}</span></div>}</div>}
         </div>
       )}
 
@@ -579,9 +629,9 @@ const IdiomTestMode=({grade,onGameEnd,onExit})=>{
 
   const handleAnswer=useCallback((idx)=>{
     if(fb!==null)return;clearInterval(tRef.current);const q=questions[ci];const ok=idx===q.answer;
-    if(ok){const pts=100+Math.floor(timeLeft*15)+combo*60;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});}
-    else{setCombo(0);setFb({type:'wrong',correctAnswer:q.meaning});}
-    setTimeout(()=>{setFb(null);if(ci+1>=questions.length){onGameEnd({score:ok?score+100+Math.floor(timeLeft*15)+combo*60:score,correctCount:ok?cc+1:cc,maxCombo:Math.max(maxCombo,ok?combo+1:maxCombo),totalQuestions:questions.length});}else{setCi(p=>p+1);setTimeLeft(12);}},1300);
+    if(ok){const pts=100+Math.floor(timeLeft*15)+combo*60;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});playSound(q.phrase);}
+    else{setCombo(0);setFb({type:'wrong',correctAnswer:q.meaning,selected:idx>=0?q.options[idx]:null});playErrorSound();setTimeout(()=>playSound(q.phrase),500);}
+    setTimeout(()=>{setFb(null);if(ci+1>=questions.length){onGameEnd({score:ok?score+100+Math.floor(timeLeft*15)+combo*60:score,correctCount:ok?cc+1:cc,maxCombo:Math.max(maxCombo,ok?combo+1:maxCombo),totalQuestions:questions.length});}else{setCi(p=>p+1);setTimeLeft(12);}},ok?1500:3000);
   },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd]);
 
   if(!questions.length)return<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
@@ -605,10 +655,10 @@ const IdiomTestMode=({grade,onGameEnd,onExit})=>{
           <span className="text-3xl md:text-4xl text-white font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{q.phrase}</span>
           <div className="mt-4 px-4 py-2 rounded-lg" style={{background:'rgba(255,255,255,0.05)'}}><span className="text-sm text-gray-400">💬 {q.example}</span></div>
         </div>
-        <div className="grid grid-cols-1 gap-3">{q.options.map((opt,i)=>{const isCA=fb&&opt===q.meaning;return(<button key={i} className="p-4 rounded-xl text-lg text-left transition-all hover:-translate-y-1 font-bold" style={{background:isCA?'rgba(107,255,142,0.2)':'rgba(37,37,66,0.9)',border:`2px solid ${isCA?'#6bff8e':'#374151'}`,color:isCA?'#6bff8e':'white',opacity:fb&&!isCA?0.5:1}} onClick={()=>handleAnswer(i)} disabled={fb!==null}><span className="inline-flex w-8 h-8 rounded-full items-center justify-center text-sm mr-3 flex-shrink-0" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{optLabels[i]}</span>{opt}</button>);})}</div>
+        <div className="grid grid-cols-1 gap-3">{q.options.map((opt,i)=>{const isCA=fb&&opt===q.meaning;const isWA=fb&&opt===fb.selected&&!isCA;return(<button key={i} className="p-4 rounded-xl text-lg text-left transition-all font-bold" style={{background:isCA?'rgba(107,255,142,0.2)':isWA?'rgba(255,107,107,0.2)':'rgba(37,37,66,0.9)',border:`2px solid ${isCA?'#6bff8e':isWA?'#ff6b6b':'#374151'}`,color:isCA?'#6bff8e':isWA?'#ff6b6b':'white',opacity:fb&&!isCA&&!isWA?0.5:1,transform:'none'}} onClick={()=>handleAnswer(i)} disabled={fb!==null}><span className="inline-flex w-8 h-8 rounded-full items-center justify-center text-sm mr-3 flex-shrink-0" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{optLabels[i]}</span>{opt}</button>);})}</div>
         {combo>=2&&<div className="text-center"><span className="px-4 py-2 rounded-full text-sm font-bold" style={{background:`${color}20`,color,fontFamily:"'Dela Gothic One',sans-serif"}}>🔥 {combo} COMBO</span></div>}
       </div>
-      {fb&&<div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"><div className="flex flex-col items-center gap-3" style={{animation:'pop 0.3s ease'}}><div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl" style={{background:fb.type==='correct'?'#6bff8e':'#ff6b6b',color:fb.type==='correct'?'#1a1a2e':'white',boxShadow:`0 0 40px ${fb.type==='correct'?'rgba(107,255,142,0.6)':'rgba(255,107,107,0.6)'}`}}>{fb.type==='correct'?'✓':'✗'}</div><span className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'正解!':'不正解…'}</span>{fb.type==='correct'?<span className="text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>+{fb.points}pt</span>:<span className="text-base text-gray-400">正解: {fb.correctAnswer}</span>}</div></div>}
+      {fb&&<div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"><div className="flex flex-col items-center gap-3" style={{animation:'pop 0.3s ease'}}><div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl" style={{background:fb.type==='correct'?'#6bff8e':'#ff6b6b',color:fb.type==='correct'?'#1a1a2e':'white',boxShadow:`0 0 40px ${fb.type==='correct'?'rgba(107,255,142,0.6)':'rgba(255,107,107,0.6)'}`}}>{fb.type==='correct'?'✓':'✗'}</div><span className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'正解!':'不正解…'}</span>{fb.type==='correct'?<span className="text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>+{fb.points}pt</span>:<div className="flex flex-col items-center gap-2 mt-2" style={{animation:'slideUp 0.3s ease 0.3s both'}}><span className="text-sm text-gray-400">正解は</span><span className="text-2xl px-6 py-3 rounded-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e',background:'rgba(107,255,142,0.15)',border:'2px solid #6bff8e',boxShadow:'0 0 20px rgba(107,255,142,0.3)'}}>{fb.correctAnswer}</span></div>}</div></div>}
     </div>
   );
 };
