@@ -309,6 +309,47 @@ const gradeColors={5:'#00d9ff',4:'#ffd93d',3:'#ff6b9d'};
 const optLabels=['A','B','C','D'];
 
 // ======== ユーティリティ（音声再生）========
+let cachedEnVoice = null;
+
+const findEnglishNativeVoice = () => {
+  if (cachedEnVoice) return cachedEnVoice;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  // 優先順位: en-US > en-GB > en-AU > その他en
+  // ネイティブ(localService)を優先、Google/Microsoftの高品質音声も可
+  const preferred = [
+    // iOS/macOS の高品質英語音声
+    v => v.lang === 'en-US' && /samantha|ava|tom|alex/i.test(v.name),
+    // Google の英語音声
+    v => v.lang === 'en-US' && /google/i.test(v.name),
+    // Microsoft の英語音声
+    v => v.lang === 'en-US' && /microsoft/i.test(v.name),
+    // en-US のローカル音声
+    v => v.lang === 'en-US' && v.localService,
+    // en-US の任意の音声
+    v => v.lang === 'en-US',
+    // en-GB のローカル音声
+    v => v.lang === 'en-GB' && v.localService,
+    // en-GB の任意の音声
+    v => v.lang === 'en-GB',
+    // en- で始まる任意の音声
+    v => v.lang.startsWith('en-') && v.localService,
+    v => v.lang.startsWith('en'),
+  ];
+  for (const test of preferred) {
+    const found = voices.find(test);
+    if (found) { cachedEnVoice = found; return found; }
+  }
+  return null;
+};
+
+// 音声リストは非同期で読み込まれるため、変更時にキャッシュ更新
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    cachedEnVoice = null;
+  };
+}
+
 const playSound = (text, lang = 'en-US') => {
   try {
     if (!window.speechSynthesis) return;
@@ -317,6 +358,8 @@ const playSound = (text, lang = 'en-US') => {
     utterance.lang = lang;
     utterance.rate = 0.9;
     utterance.pitch = 1.0;
+    const voice = findEnglishNativeVoice();
+    if (voice) utterance.voice = voice;
     utterance.onerror = () => {};
     window.speechSynthesis.speak(utterance);
   } catch (e) {}
