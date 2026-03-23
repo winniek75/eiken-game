@@ -310,30 +310,46 @@ const optLabels=['A','B','C','D'];
 
 // ======== ユーティリティ（音声再生）========
 const playSound = (text, lang = 'en-US') => {
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
-  utterance.rate = 0.9;
-  utterance.pitch = 1.0;
-  speechSynthesis.speak(utterance);
+  try {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    utterance.onerror = () => {};
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {}
+};
+
+let sharedAudioContext = null;
+const getAudioContext = () => {
+  if (!sharedAudioContext || sharedAudioContext.state === 'closed') {
+    sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return sharedAudioContext;
 };
 
 const playErrorSound = () => {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
+  try {
+    const audioContext = getAudioContext();
+    if (audioContext.state === 'suspended') audioContext.resume();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
 
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
 
-  oscillator.type = 'square';
-  oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-  oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.1);
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.1);
 
-  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
 
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.2);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  } catch (e) {}
 };
 
 // ======== 共有コンポーネント ========
@@ -379,22 +395,23 @@ const MainMenu=({onStartGame,onIdiomSection,highScores})=>{
 
 // ======== ゲーム画面 ========
 const GameScreen=({grade,onGameEnd,onExit})=>{
-  const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(15);const[cc,setCc]=useState(0);const[showHint,setShowHint]=useState(false);const[fb,setFb]=useState(null);const[me,setMe]=useState('thinking');const[mm,setMm]=useState('がんばれ〜！');const[showExit,setShowExit]=useState(false);const tRef=useRef(null);
+  const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(15);const[cc,setCc]=useState(0);const[showHint,setShowHint]=useState(false);const[fb,setFb]=useState(null);const[me,setMe]=useState('thinking');const[mm,setMm]=useState('がんばれ〜！');const[showExit,setShowExit]=useState(false);const tRef=useRef(null);const handleAnswerRef=useRef(null);
   const color=gradeColors[grade];
   useEffect(()=>{setQuestions(getRandomQuestions(grade,10));},[grade]);
-  useEffect(()=>{if(!questions.length)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswer(-1);return 15;}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
   const handleAnswer=useCallback((si)=>{
     if(fb!==null)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
     if(ok){const pts=100+Math.floor(timeLeft*10)+combo*50;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});const ms=['すごい！','ナイス！','完璧！','その調子！','天才！'];setMm(ms[Math.floor(Math.random()*ms.length)]);setMe(combo>=2?'excited':'happy');playSound(cq.options[cq.answer]);}
     else{setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(cq.options[cq.answer]),500);}
     setTimeout(()=>{setFb(null);setShowHint(false);setMe('thinking');setMm('');if(ci+1>=questions.length){onGameEnd({score:ok?score+100+Math.floor(timeLeft*10)+combo*50:score,correctCount:ok?cc+1:cc,maxCombo:Math.max(maxCombo,ok?combo+1:maxCombo),totalQuestions:questions.length});}else{setCi(p=>p+1);setTimeLeft(15);}},ok?1500:3000);
   },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd]);
+  handleAnswerRef.current=handleAnswer;
+  useEffect(()=>{if(!questions.length)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return 15;}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
   if(!questions.length)return<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   const cq=questions[ci];const prog=((ci+1)/questions.length)*100;const tc=timeLeft<=5?'#ff6b6b':timeLeft<=10?'#ffd93d':'#6bff8e';
   return(
     <div className="min-h-screen p-4" style={{background:`radial-gradient(circle at 30% 70%,${color}15 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)`}}>
       <ComboEffect combo={combo}/>
-      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>{setShowExit(false);tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswer(-1);return 15;}return p-1;});},1000);}}/>
+      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>{setShowExit(false);clearInterval(tRef.current);tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return 15;}return p-1;});},1000);}}/>
       <div className="flex justify-between items-center p-4 rounded-2xl mb-6" style={{background:'rgba(37,37,66,0.8)'}}>
         <button className="p-2 rounded-xl hover:bg-white/10 transition-all mr-2" onClick={()=>{clearInterval(tRef.current);setShowExit(true);}}><span className="text-2xl">←</span></button>
         <div className="flex items-center gap-4"><div className="px-4 py-2 rounded-full text-lg font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div><div className="flex flex-col"><span className="text-xs text-gray-400">SCORE</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div></div>
@@ -500,17 +517,16 @@ const IdiomLearnMode=({grade,onExit,onFinish})=>{
     }
   },[phase,cardIdx,flipped,batch]);
 
-  const handleNextCard=()=>{if(!flipped){setFlipped(true);return;}if(cardIdx<curItems.length-1){setCardIdx(p=>p+1);setFlipped(false);}else{setPhase('quiz');setQi(0);setBScore(0);setQuizOptions({});}};
+  const handleNextCard=()=>{if(!flipped){setFlipped(true);return;}if(cardIdx<curItems.length-1){setCardIdx(p=>p+1);setFlipped(false);}else{setPhase('quiz');setQi(0);setBScore(0);quizOptionsRef.current={};}};
 
-  const[quizOptions,setQuizOptions]=useState({});
+  const quizOptionsRef=useRef({});
   const getOpts=(item)=>{
-    if(!quizOptions[item.phrase]){
+    if(!quizOptionsRef.current[item.phrase]){
       const others=idiomData.filter(i=>i.phrase!==item.phrase);
       const opts=shuffleArray([item.meaning,...shuffleArray(others).slice(0,3).map(i=>i.meaning)]);
-      setQuizOptions(prev=>({...prev,[item.phrase]:opts}));
-      return opts;
+      quizOptionsRef.current[item.phrase]=opts;
     }
-    return quizOptions[item.phrase];
+    return quizOptionsRef.current[item.phrase];
   };
 
   const handleQuizAns=(sel)=>{
@@ -616,7 +632,7 @@ const IdiomLearnMode=({grade,onExit,onFinish})=>{
 // ======== 熟語テストモード ========
 const IdiomTestMode=({grade,onGameEnd,onExit})=>{
   const idiomData=getIdiomByGrade(grade);
-  const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(12);const[cc,setCc]=useState(0);const[fb,setFb]=useState(null);const[showExit,setShowExit]=useState(false);const tRef=useRef(null);
+  const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(12);const[cc,setCc]=useState(0);const[fb,setFb]=useState(null);const[showExit,setShowExit]=useState(false);const tRef=useRef(null);const handleAnswerRef=useRef(null);
   const color=gradeColors[grade];const TQ=15;
 
   useEffect(()=>{
@@ -625,14 +641,15 @@ const IdiomTestMode=({grade,onGameEnd,onExit})=>{
     setQuestions(qs);
   },[grade]);
 
-  useEffect(()=>{if(!questions.length)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswer(-1);return 12;}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
-
   const handleAnswer=useCallback((idx)=>{
     if(fb!==null)return;clearInterval(tRef.current);const q=questions[ci];const ok=idx===q.answer;
     if(ok){const pts=100+Math.floor(timeLeft*15)+combo*60;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});playSound(q.phrase);}
     else{setCombo(0);setFb({type:'wrong',correctAnswer:q.meaning,selected:idx>=0?q.options[idx]:null});playErrorSound();setTimeout(()=>playSound(q.phrase),500);}
     setTimeout(()=>{setFb(null);if(ci+1>=questions.length){onGameEnd({score:ok?score+100+Math.floor(timeLeft*15)+combo*60:score,correctCount:ok?cc+1:cc,maxCombo:Math.max(maxCombo,ok?combo+1:maxCombo),totalQuestions:questions.length});}else{setCi(p=>p+1);setTimeLeft(12);}},ok?1500:3000);
   },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd]);
+  handleAnswerRef.current=handleAnswer;
+
+  useEffect(()=>{if(!questions.length)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return 12;}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
 
   if(!questions.length)return<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   const q=questions[ci];const prog=((ci+1)/questions.length)*100;const tc=timeLeft<=3?'#ff6b6b':timeLeft<=7?'#ffd93d':'#6bff8e';
@@ -640,7 +657,7 @@ const IdiomTestMode=({grade,onGameEnd,onExit})=>{
   return(
     <div className="min-h-screen p-4" style={{background:`radial-gradient(circle at 40% 60%,${color}15 0%,transparent 50%),linear-gradient(135deg,#0f0f2e 0%,#1a1a3e 100%)`}}>
       <ComboEffect combo={combo}/>
-      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>{setShowExit(false);tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswer(-1);return 12;}return p-1;});},1000);}}/>
+      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>{setShowExit(false);clearInterval(tRef.current);tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return 12;}return p-1;});},1000);}}/>
       <div className="flex items-center justify-between p-3 rounded-2xl mb-5" style={{background:'rgba(37,37,66,0.8)'}}>
         <button className="p-2 rounded-xl hover:bg-white/10 text-xl text-white" onClick={()=>{clearInterval(tRef.current);setShowExit(true);}}>←</button>
         <div className="flex items-center gap-3"><span className="px-3 py-1 rounded-full font-bold text-sm" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>熟語{grade}級</span><div className="flex flex-col"><span className="text-xs text-gray-400">SCORE</span><span className="text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div></div>
