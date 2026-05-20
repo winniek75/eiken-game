@@ -963,6 +963,33 @@ const ReviewScreen = ({wrongHistory, onStartReview, onBack}) => {
   );
 };
 
+// ======== WiseXP SDK integration ========
+const initWiseXP = () => {
+  if (typeof window !== 'undefined' && window.WiseXP && !window.WiseXP.isInitialized()) {
+    window.WiseXP.init('eiken-game').catch(() => {});
+  }
+};
+const reportToXP = (result, grade) => {
+  if (typeof window !== 'undefined' && window.WiseXP && window.WiseXP.isInitialized()) {
+    window.WiseXP.reportGame({
+      score: result.score,
+      correct: result.correctCount,
+      total: result.totalQuestions,
+      maxCombo: result.maxCombo,
+      grade: String(grade)
+    }).catch(() => {});
+  }
+};
+const reportWrongToXP = (q) => {
+  if (typeof window !== 'undefined' && window.WiseXP && window.WiseXP.isInitialized()) {
+    window.WiseXP.reportWrong({
+      question: q.question,
+      correct: q.options[q.answer],
+      playerAnswer: ''
+    }).catch(() => {});
+  }
+};
+
 // ======== メインApp ========
 export default function App(){
   const [saveData, setSaveData] = useState(() => {
@@ -976,6 +1003,9 @@ export default function App(){
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showStreak, setShowStreak] = useState(false);
   const [streakChecked, setStreakChecked] = useState(false);
+
+  // Initialize WiseXP SDK
+  useEffect(() => { initWiseXP(); }, []);
 
   const hs = saveData.highScores;
   const ihs = saveData.idiomHighScores;
@@ -1030,6 +1060,9 @@ export default function App(){
       wrongHistory: addWrongQuestions(prev.wrongHistory, wrongThisGame),
     }));
 
+    // Report to shared XP system
+    reportToXP(r, sg);
+
     if (newLevel > prevLevel) {
       setShowLevelUp(true);
       playLevelUpSound();
@@ -1060,6 +1093,7 @@ export default function App(){
 
   const trackWrong = (question) => {
     setWrongThisGame(prev => [...prev, question]);
+    reportWrongToXP(question);
   };
 
   const daily = getDailyChallenge(saveData);
