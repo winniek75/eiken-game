@@ -827,6 +827,19 @@ const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表',
         <h1 className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(135deg,#ff6b9d,#c44eff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{title}</h1>
         <div className="flex flex-col items-center gap-4"><div className="w-28 h-28 rounded-full flex items-center justify-center" style={{background:`linear-gradient(135deg,${color},${color}99)`,boxShadow:`0 0 50px ${color}80`,animation:'pop 0.5s ease'}}><span className="text-6xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{rank}</span></div><p className="text-lg text-gray-400">{msg}</p></div>
         <Mascot emotion={acc>=70?'excited':acc>=50?'happy':'sad'} message={acc>=70?'最高！':acc>=50?'いい感じ！':'また挑戦しよう！'}/>
+        {/* Near-miss feedback */}
+        {acc >= 80 && acc < 100 && (
+          <div className="px-6 py-3 rounded-xl text-center" style={{background:'rgba(255,217,61,0.15)',border:'2px solid rgba(255,217,61,0.3)',animation:'pulse 1.5s ease-in-out infinite'}}>
+            <span className="text-lg font-bold" style={{color:'#ffd93d'}}>
+              あと{result.totalQuestions - result.correctCount}問でパーフェクト！もう一回？
+            </span>
+          </div>
+        )}
+        {acc === 100 && (
+          <div className="px-6 py-3 rounded-xl text-center" style={{background:'linear-gradient(135deg,rgba(107,255,142,0.2),rgba(0,217,255,0.2))',border:'2px solid #6bff8e',animation:'glow 2s ease-in-out infinite'}}>
+            <span className="text-2xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e'}}>PERFECT!</span>
+          </div>
+        )}
         {sd&&<>
           <div className="grid grid-cols-2 gap-5 w-full" style={{animation:'slideUp 0.5s ease 0.3s both'}}>{[{label:'スコア',value:result.score.toLocaleString(),c:'#ffd93d'},{label:'正解数',value:`${result.correctCount}/${result.totalQuestions}`,c:'white'},{label:'正解率',value:`${acc}%`,c:'white'},{label:'最大コンボ',value:`${result.maxCombo}×`,c:'#ff6b9d'}].map((s,i)=>(<div key={i} className="rounded-xl p-5 flex flex-col items-center gap-2" style={{background:'rgba(15,15,26,0.5)'}}><span className="text-sm text-gray-400">{s.label}</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:s.c}}>{s.value}</span></div>))}</div>
           {saveData && (
