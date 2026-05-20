@@ -1,4 +1,130 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+
+// ======== localStorage 永続化 ========
+const STORAGE_KEY = 'eiken_quest_data';
+const loadSaveData = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+};
+const saveSaveData = (data) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+};
+const getDefaultSaveData = () => ({
+  highScores: { 5: 0, 4: 0, 3: 0 },
+  idiomHighScores: { 5: 0, 4: 0, 3: 0 },
+  totalXP: 0,
+  level: 1,
+  gamesPlayed: 0,
+  streak: { current: 0, lastDate: null, best: 0 },
+  dailyChallenge: { date: null, completed: false, grade: null },
+  wrongHistory: [],
+});
+
+// ======== XP / レベルシステム ========
+const XP_PER_LEVEL = 500;
+const calcLevel = (xp) => Math.floor(xp / XP_PER_LEVEL) + 1;
+const xpToNextLevel = (xp) => XP_PER_LEVEL - (xp % XP_PER_LEVEL);
+const xpProgress = (xp) => ((xp % XP_PER_LEVEL) / XP_PER_LEVEL) * 100;
+
+// ======== ストリーク管理 ========
+const getTodayStr = () => new Date().toISOString().slice(0, 10);
+const updateStreak = (streak) => {
+  const today = getTodayStr();
+  if (streak.lastDate === today) return streak;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  const newCurrent = streak.lastDate === yesterdayStr ? streak.current + 1 : 1;
+  return { current: newCurrent, lastDate: today, best: Math.max(streak.best, newCurrent) };
+};
+
+// ======== デイリーチャレンジ ========
+const getDailyChallenge = (saved) => {
+  const today = getTodayStr();
+  if (saved.dailyChallenge.date === today) return saved.dailyChallenge;
+  const seed = today.split('-').join('');
+  const grade = [5, 4, 3][parseInt(seed) % 3];
+  return { date: today, completed: false, grade };
+};
+
+// ======== 間違えた問題の記録 ========
+const MAX_WRONG_HISTORY = 100;
+const addWrongQuestions = (history, questions) => {
+  const newHistory = [...history];
+  for (const q of questions) {
+    const exists = newHistory.findIndex(h => h.question === q.question);
+    if (exists >= 0) {
+      newHistory[exists].wrongCount = (newHistory[exists].wrongCount || 1) + 1;
+      newHistory[exists].lastWrong = Date.now();
+    } else {
+      newHistory.push({ ...q, wrongCount: 1, lastWrong: Date.now() });
+    }
+  }
+  return newHistory.slice(-MAX_WRONG_HISTORY);
+};
+
+// ======== 正解チャイム音 ========
+const playCorrectChime = () => {
+  try {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+    const notes = [523.25, 659.25, 783.99];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.3);
+      osc.start(ctx.currentTime + i * 0.1);
+      osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+    });
+  } catch {}
+};
+
+const playLevelUpSound = () => {
+  try {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.4);
+      osc.start(ctx.currentTime + i * 0.15);
+      osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+    });
+  } catch {}
+};
+
+const playStreakSound = () => {
+  try {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+    [392, 523.25, 659.25].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.25);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.25);
+    });
+  } catch {}
+};
 
 // ======== 英検5級の問題（100問）========
 const grade5Questions = [
@@ -404,18 +530,73 @@ const ComboEffect=({combo})=>{if(combo<2)return null;return(<div className="fixe
 const ConfirmDialog=({isOpen,onConfirm,onCancel})=>{if(!isOpen)return null;return(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"><div className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full mx-4 text-center" style={{animation:'pop 0.3s ease'}}><div className="text-4xl mb-4">🤔</div><h3 className="text-xl font-bold text-white mb-2">ゲームを終了しますか？</h3><p className="text-gray-400 mb-6">現在の進行状況は保存されません</p><div className="flex gap-3"><button className="flex-1 py-3 rounded-xl font-bold text-white bg-gray-600 hover:bg-gray-500 transition-all" onClick={onCancel}>続ける</button><button className="flex-1 py-3 rounded-xl font-bold text-white transition-all" style={{background:'linear-gradient(135deg,#ff6b6b,#ff8e53)'}} onClick={onConfirm}>終了する</button></div></div></div>);};
 
 // ======== メインメニュー ========
-const MainMenu=({onStartGame,onIdiomSection,highScores})=>{
+const MainMenu=({onStartGame,onIdiomSection,onReviewSection,highScores,saveData,daily})=>{
   const[selectedGrade,setSelectedGrade]=useState(null);
   const grades=[{level:5,name:'5級',desc:'小学校高学年〜中1',color:'#00d9ff',emoji:'🌟',q:grade5Questions.length},{level:4,name:'4級',desc:'中学2年レベル',color:'#ffd93d',emoji:'⭐',q:grade4Questions.length},{level:3,name:'3級',desc:'中学卒業レベル',color:'#ff6b9d',emoji:'💫',q:grade3Questions.length}];
+  const level = saveData?.level || 1;
+  const totalXP = saveData?.totalXP || 0;
+  const streak = saveData?.streak || { current: 0, best: 0 };
+  const wrongCount = saveData?.wrongHistory?.length || 0;
+  const gradeNames = {5:'5級',4:'4級',3:'3級'};
+
   return(
-    <div className="min-h-screen p-6 flex flex-col items-center gap-8" style={{background:'radial-gradient(circle at 20% 20%,rgba(196,78,255,0.15) 0%,transparent 40%),radial-gradient(circle at 80% 80%,rgba(255,107,157,0.15) 0%,transparent 40%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
-      <div className="text-center flex flex-col items-center gap-5">
+    <div className="min-h-screen p-6 flex flex-col items-center gap-6" style={{background:'radial-gradient(circle at 20% 20%,rgba(196,78,255,0.15) 0%,transparent 40%),radial-gradient(circle at 80% 80%,rgba(255,107,157,0.15) 0%,transparent 40%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
+      {/* タイトル */}
+      <div className="text-center flex flex-col items-center gap-4">
         <h1 className="flex flex-wrap justify-center gap-2" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>
           <span className="text-5xl md:text-6xl" style={{background:'linear-gradient(135deg,#00d9ff,#00f5d4)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',filter:'drop-shadow(0 0 20px rgba(0,217,255,0.5))'}}>英検</span>
           <span className="text-5xl md:text-6xl" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',filter:'drop-shadow(0 0 20px rgba(255,107,157,0.5))'}}>クエスト</span>
         </h1>
         <Mascot emotion="happy" message="さあ、チャレンジしよう！"/>
       </div>
+
+      {/* プレイヤーステータス */}
+      <div className="w-full max-w-3xl rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4" style={{background:'rgba(37,37,66,0.8)',backdropFilter:'blur(10px)'}}>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',fontFamily:"'Dela Gothic One',sans-serif",color:'#1a1a2e'}}>
+            {level}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-400">レベル {level}</span>
+            <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-500" style={{width:`${xpProgress(totalXP)}%`,background:'linear-gradient(90deg,#ffd93d,#ff8e53)'}} />
+            </div>
+            <span className="text-[10px] text-gray-500">{xpToNextLevel(totalXP)} XP to next</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          {streak.current > 0 && (
+            <div className="flex items-center gap-1 px-3 py-1 rounded-full" style={{background:'rgba(255,107,157,0.2)'}}>
+              <span className="text-lg">🔥</span>
+              <span className="text-sm font-bold" style={{color:'#ff6b9d'}}>{streak.current}日</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1 px-3 py-1 rounded-full" style={{background:'rgba(255,217,61,0.2)'}}>
+            <span className="text-sm">⭐</span>
+            <span className="text-sm font-bold" style={{color:'#ffd93d'}}>{totalXP.toLocaleString()} XP</span>
+          </div>
+        </div>
+      </div>
+
+      {/* デイリーチャレンジ */}
+      {daily && !daily.completed && (
+        <button className="w-full max-w-3xl rounded-2xl p-5 flex items-center gap-4 transition-all hover:scale-[1.02] cursor-pointer" style={{background:'linear-gradient(135deg,rgba(255,217,61,0.15),rgba(255,142,83,0.15))',border:'2px solid rgba(255,217,61,0.3)',animation:'glow 2s ease-in-out infinite'}} onClick={()=>onStartGame(daily.grade)}>
+          <span className="text-4xl">🎯</span>
+          <div className="flex-1">
+            <div className="text-lg font-black text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>今日のチャレンジ</div>
+            <div className="text-sm text-gray-400">{gradeNames[daily.grade]}に挑戦してボーナスXPをゲット！</div>
+          </div>
+          <span className="text-2xl">→</span>
+        </button>
+      )}
+      {daily && daily.completed && (
+        <div className="w-full max-w-3xl rounded-2xl p-4 flex items-center gap-4" style={{background:'rgba(107,255,142,0.1)',border:'2px solid rgba(107,255,142,0.3)'}}>
+          <span className="text-3xl">✅</span>
+          <div><span className="text-white font-bold">今日のチャレンジ完了！</span><span className="text-gray-400 text-sm ml-2">明日もがんばろう！</span></div>
+        </div>
+      )}
+
+      {/* 級選択 */}
       <div className="w-full max-w-3xl">
         <h2 className="text-xl text-gray-400 text-center mb-5" style={{fontFamily:"'M PLUS Rounded 1c',sans-serif"}}>レベルを選択</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -429,22 +610,38 @@ const MainMenu=({onStartGame,onIdiomSection,highScores})=>{
         </div>
       </div>
       {selectedGrade&&<button className="flex items-center gap-4 px-12 py-5 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',boxShadow:'0 10px 40px rgba(196,78,255,0.4)',animation:'pop 0.3s ease'}} onClick={()=>onStartGame(selectedGrade)}><span className="text-2xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>ゲームスタート！</span><span className="text-3xl">🚀</span></button>}
-      <button className="flex items-center gap-4 px-10 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105 mt-2" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 10px 40px rgba(255,142,83,0.3)',animation:'slideUp 0.6s ease forwards'}} onClick={onIdiomSection}>
-        <span className="text-3xl">📚</span><span className="text-xl text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>熟語マスター</span><span className="text-3xl">🔥</span>
-      </button>
+
+      {/* サブメニュー */}
+      <div className="flex flex-wrap gap-3 justify-center">
+        <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 10px 40px rgba(255,142,83,0.3)'}} onClick={onIdiomSection}>
+          <span className="text-2xl">📚</span><span className="text-lg text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>熟語マスター</span>
+        </button>
+        {wrongCount > 0 && (
+          <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff8e53)',boxShadow:'0 10px 40px rgba(255,107,107,0.3)'}} onClick={onReviewSection}>
+            <span className="text-2xl">🔄</span><span className="text-lg text-white font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>復習 ({wrongCount})</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 };
 
 // ======== ゲーム画面 ========
-const GameScreen=({grade,onGameEnd,onExit})=>{
+const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions})=>{
   const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(15);const[cc,setCc]=useState(0);const[showHint,setShowHint]=useState(false);const[fb,setFb]=useState(null);const[me,setMe]=useState('thinking');const[mm,setMm]=useState('がんばれ〜！');const[showExit,setShowExit]=useState(false);const tRef=useRef(null);const handleAnswerRef=useRef(null);
   const color=gradeColors[grade];
-  useEffect(()=>{setQuestions(getRandomQuestions(grade,10));},[grade]);
+  useEffect(()=>{
+    if (reviewQuestions && reviewQuestions.length > 0) {
+      const shuffled = shuffleArray([...reviewQuestions]).slice(0, 10);
+      setQuestions(shuffled);
+    } else {
+      setQuestions(getRandomQuestions(grade,10));
+    }
+  },[grade]);
   const handleAnswer=useCallback((si)=>{
     if(fb!==null)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
-    if(ok){const pts=100+Math.floor(timeLeft*10)+combo*50;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});const ms=['すごい！','ナイス！','完璧！','その調子！','天才！'];setMm(ms[Math.floor(Math.random()*ms.length)]);setMe(combo>=2?'excited':'happy');playSound(cq.options[cq.answer]);}
-    else{setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(cq.options[cq.answer]),500);}
+    if(ok){const pts=100+Math.floor(timeLeft*10)+combo*50;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});const ms=['すごい！','ナイス！','完璧！','その調子！','天才！'];setMm(ms[Math.floor(Math.random()*ms.length)]);setMe(combo>=2?'excited':'happy');playCorrectChime();setTimeout(()=>playSound(cq.options[cq.answer]),300);}
+    else{setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(cq.options[cq.answer]),500);if(onWrong)onWrong(cq);}
     setTimeout(()=>{setFb(null);setShowHint(false);setMe('thinking');setMm('');if(ci+1>=questions.length){onGameEnd({score:ok?score+100+Math.floor(timeLeft*10)+combo*50:score,correctCount:ok?cc+1:cc,maxCombo:Math.max(maxCombo,ok?combo+1:maxCombo),totalQuestions:questions.length});}else{setCi(p=>p+1);setTimeLeft(15);}},ok?1500:3000);
   },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd]);
   handleAnswerRef.current=handleAnswer;
@@ -479,7 +676,7 @@ const GameScreen=({grade,onGameEnd,onExit})=>{
 };
 
 // ======== リザルト画面 ========
-const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表'})=>{
+const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表',xpEarned=0,saveData})=>{
   const[sd,setSd]=useState(false);const inh=result.score>highScore;const acc=Math.round((result.correctCount/result.totalQuestions)*100);
   const getRank=()=>{if(acc>=90)return{rank:'S',color:'#ffd93d',msg:'素晴らしい！完璧に近い！'};if(acc>=70)return{rank:'A',color:'#6bff8e',msg:'すごい！よくできました！'};if(acc>=50)return{rank:'B',color:'#00d9ff',msg:'がんばりました！'};if(acc>=30)return{rank:'C',color:'#c44eff',msg:'もう少し練習しよう！'};return{rank:'D',color:'#ff6b6b',msg:'次はもっとがんばろう！'};};
   const{rank,color,msg}=getRank();
@@ -491,7 +688,18 @@ const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表'}
         <h1 className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(135deg,#ff6b9d,#c44eff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{title}</h1>
         <div className="flex flex-col items-center gap-4"><div className="w-28 h-28 rounded-full flex items-center justify-center" style={{background:`linear-gradient(135deg,${color},${color}99)`,boxShadow:`0 0 50px ${color}80`,animation:'pop 0.5s ease'}}><span className="text-6xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{rank}</span></div><p className="text-lg text-gray-400">{msg}</p></div>
         <Mascot emotion={acc>=70?'excited':acc>=50?'happy':'sad'} message={acc>=70?'最高！':acc>=50?'いい感じ！':'また挑戦しよう！'}/>
-        {sd&&<div className="grid grid-cols-2 gap-5 w-full" style={{animation:'slideUp 0.5s ease 0.3s both'}}>{[{label:'スコア',value:result.score.toLocaleString(),c:'#ffd93d'},{label:'正解数',value:`${result.correctCount}/${result.totalQuestions}`,c:'white'},{label:'正解率',value:`${acc}%`,c:'white'},{label:'最大コンボ',value:`${result.maxCombo}×`,c:'#ff6b9d'}].map((s,i)=>(<div key={i} className="rounded-xl p-5 flex flex-col items-center gap-2" style={{background:'rgba(15,15,26,0.5)'}}><span className="text-sm text-gray-400">{s.label}</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:s.c}}>{s.value}</span></div>))}</div>}
+        {sd&&<>
+          <div className="grid grid-cols-2 gap-5 w-full" style={{animation:'slideUp 0.5s ease 0.3s both'}}>{[{label:'スコア',value:result.score.toLocaleString(),c:'#ffd93d'},{label:'正解数',value:`${result.correctCount}/${result.totalQuestions}`,c:'white'},{label:'正解率',value:`${acc}%`,c:'white'},{label:'最大コンボ',value:`${result.maxCombo}×`,c:'#ff6b9d'}].map((s,i)=>(<div key={i} className="rounded-xl p-5 flex flex-col items-center gap-2" style={{background:'rgba(15,15,26,0.5)'}}><span className="text-sm text-gray-400">{s.label}</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:s.c}}>{s.value}</span></div>))}</div>
+          {saveData && (
+            <div className="w-full rounded-xl p-4 flex items-center gap-4" style={{background:'rgba(255,217,61,0.1)',border:'1px solid rgba(255,217,61,0.2)',animation:'slideUp 0.5s ease 0.5s both'}}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{saveData.level}</div>
+              <div className="flex-1">
+                <div className="flex justify-between text-xs mb-1"><span style={{color:'#ffd93d'}}>+{xpEarned} XP</span><span className="text-gray-500">Lv.{saveData.level}</span></div>
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-1000" style={{width:`${xpProgress(saveData.totalXP)}%`,background:'linear-gradient(90deg,#ffd93d,#ff8e53)'}}/></div>
+              </div>
+            </div>
+          )}
+        </>}
         <div className="flex gap-5 w-full"><button className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-lg font-bold text-white transition-all hover:-translate-y-1" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}} onClick={onRetry}><span>🔄</span><span>もう一度</span></button><button className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-lg font-bold text-white border-2 border-white/20 bg-white/10 transition-all hover:-translate-y-1" onClick={onMenu}><span>🏠</span><span>メニュー</span></button></div>
       </div>
     </div>
@@ -723,13 +931,138 @@ const IdiomTestMode=({grade,onGameEnd,onExit})=>{
   );
 };
 
+// ======== 復習モード画面 ========
+const ReviewScreen = ({wrongHistory, onStartReview, onBack}) => {
+  if (!wrongHistory.length) return (
+    <div className="min-h-screen p-6 flex flex-col items-center justify-center gap-6" style={{background:'linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
+      <Mascot emotion="happy" message="間違えた問題はないよ！" />
+      <p className="text-gray-400 text-lg text-center">まだ間違えた問題がありません。<br/>ゲームをプレイして復習リストを作ろう！</p>
+      <button className="px-8 py-4 rounded-full font-bold text-white transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}} onClick={onBack}>戻る</button>
+    </div>
+  );
+  const sorted = [...wrongHistory].sort((a,b) => (b.wrongCount||1) - (a.wrongCount||1));
+  return (
+    <div className="min-h-screen p-6 flex flex-col items-center gap-6" style={{background:'radial-gradient(circle at 50% 20%,rgba(255,107,107,0.15) 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
+      <button className="self-start p-3 rounded-xl hover:bg-white/10 transition-all text-2xl text-white" onClick={onBack}>← 戻る</button>
+      <h1 className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(135deg,#ff6b6b,#ff8e53)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>復習モード</h1>
+      <Mascot emotion="thinking" message="苦手を克服しよう！" />
+      <p className="text-gray-400">{sorted.length}問の復習問題があります</p>
+      <div className="w-full max-w-md space-y-2 max-h-60 overflow-y-auto">
+        {sorted.slice(0, 10).map((q, i) => (
+          <div key={i} className="flex justify-between items-center px-4 py-3 rounded-xl" style={{background:'rgba(37,37,66,0.8)'}}>
+            <span className="text-white text-sm truncate flex-1">{q.question}</span>
+            <span className="text-xs px-2 py-1 rounded-full ml-2" style={{background:'rgba(255,107,107,0.2)',color:'#ff6b6b'}}>{q.wrongCount}回</span>
+          </div>
+        ))}
+      </div>
+      <button className="flex items-center gap-3 px-10 py-5 rounded-full transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff8e53)',boxShadow:'0 10px 30px rgba(255,107,107,0.3)'}} onClick={() => onStartReview(sorted)}>
+        <span className="text-3xl">🔄</span>
+        <span className="text-xl text-white font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>復習スタート！</span>
+      </button>
+    </div>
+  );
+};
+
 // ======== メインApp ========
 export default function App(){
-  const[gs,setGs]=useState(GAME_STATES.MENU);const[sg,setSg]=useState(5);const[gr,setGr]=useState(null);const[hs,setHs]=useState({5:0,4:0,3:0});const[ihs,setIhs]=useState({5:0,4:0,3:0});
+  const [saveData, setSaveData] = useState(() => {
+    const loaded = loadSaveData();
+    return loaded || getDefaultSaveData();
+  });
+  const [gs, setGs] = useState(GAME_STATES.MENU);
+  const [sg, setSg] = useState(5);
+  const [gr, setGr] = useState(null);
+  const [wrongThisGame, setWrongThisGame] = useState([]);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [showStreak, setShowStreak] = useState(false);
+  const [streakChecked, setStreakChecked] = useState(false);
 
-  const handleStartGame=(g)=>{setSg(g);setGs(GAME_STATES.PLAYING);};
-  const handleGameEnd=(r)=>{setGr(r);if(r.score>hs[sg])setHs(p=>({...p,[sg]:r.score}));setGs(GAME_STATES.RESULT);};
-  const handleIdiomEnd=(r)=>{setGr(r);if(r.score>ihs[sg])setIhs(p=>({...p,[sg]:r.score}));setGs(GAME_STATES.IDIOM_RESULT);};
+  const hs = saveData.highScores;
+  const ihs = saveData.idiomHighScores;
+
+  // ストリーク確認（初回メニュー表示時）
+  useEffect(() => {
+    if (gs === GAME_STATES.MENU && !streakChecked) {
+      const today = getTodayStr();
+      if (saveData.streak.lastDate !== today) {
+        const newStreak = updateStreak(saveData.streak);
+        const updated = { ...saveData, streak: newStreak, dailyChallenge: getDailyChallenge(saveData) };
+        setSaveData(updated);
+        saveSaveData(updated);
+        if (newStreak.current > 1) {
+          setShowStreak(true);
+          playStreakSound();
+          setTimeout(() => setShowStreak(false), 3000);
+        }
+      }
+      setStreakChecked(true);
+    }
+  }, [gs]);
+
+  const persist = (updater) => {
+    setSaveData(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveSaveData(next);
+      return next;
+    });
+  };
+
+  const handleStartGame = (g) => { setSg(g); setGs(GAME_STATES.PLAYING); setWrongThisGame([]); };
+
+  const handleGameEnd = (r) => {
+    setGr(r);
+    const prevLevel = calcLevel(saveData.totalXP);
+    const earnedXP = r.score;
+    const newXP = saveData.totalXP + earnedXP;
+    const newLevel = calcLevel(newXP);
+    const today = getTodayStr();
+    const dc = saveData.dailyChallenge;
+    const dailyCompleted = dc.date === today && dc.grade === sg ? true : dc.completed;
+
+    persist(prev => ({
+      ...prev,
+      highScores: r.score > prev.highScores[sg] ? { ...prev.highScores, [sg]: r.score } : prev.highScores,
+      totalXP: newXP,
+      level: newLevel,
+      gamesPlayed: prev.gamesPlayed + 1,
+      streak: updateStreak(prev.streak),
+      dailyChallenge: { ...prev.dailyChallenge, completed: dailyCompleted },
+      wrongHistory: addWrongQuestions(prev.wrongHistory, wrongThisGame),
+    }));
+
+    if (newLevel > prevLevel) {
+      setShowLevelUp(true);
+      playLevelUpSound();
+      setTimeout(() => setShowLevelUp(false), 3000);
+    }
+    setGs(GAME_STATES.RESULT);
+  };
+
+  const handleIdiomEnd = (r) => {
+    setGr(r);
+    const earnedXP = r.score;
+    persist(prev => ({
+      ...prev,
+      idiomHighScores: r.score > prev.idiomHighScores[sg] ? { ...prev.idiomHighScores, [sg]: r.score } : prev.idiomHighScores,
+      totalXP: prev.totalXP + earnedXP,
+      level: calcLevel(prev.totalXP + earnedXP),
+      gamesPlayed: prev.gamesPlayed + 1,
+      streak: updateStreak(prev.streak),
+    }));
+    setGs(GAME_STATES.IDIOM_RESULT);
+  };
+
+  const handleStartReview = (questions) => {
+    setSg(0);
+    setGs(GAME_STATES.PLAYING);
+    setWrongThisGame([]);
+  };
+
+  const trackWrong = (question) => {
+    setWrongThisGame(prev => [...prev, question]);
+  };
+
+  const daily = getDailyChallenge(saveData);
 
   return(
     <>
@@ -741,15 +1074,35 @@ export default function App(){
         @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
         @keyframes shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-5px)}20%,40%,60%,80%{transform:translateX(5px)}}
         @keyframes rainbow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
+        @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,217,61,0.3)}50%{box-shadow:0 0 40px rgba(255,217,61,0.6)}}
         *{box-sizing:border-box}body{margin:0;padding:0}
       `}</style>
-      {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} highScores={hs}/>}
-      {gs===GAME_STATES.PLAYING&&<GameScreen grade={sg} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)}/>}
-      {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} onRetry={()=>setGs(GAME_STATES.PLAYING)} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]}/>}
+
+      {/* レベルアップ通知 */}
+      {showLevelUp && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-2xl text-center" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 10px 40px rgba(255,217,61,0.5)',animation:'pop 0.5s ease'}}>
+          <div className="text-3xl font-black text-gray-900" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>LEVEL UP!</div>
+          <div className="text-lg text-gray-800 font-bold">Lv.{saveData.level}</div>
+        </div>
+      )}
+
+      {/* ストリーク通知 */}
+      {showStreak && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 rounded-2xl text-center" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',boxShadow:'0 10px 40px rgba(196,78,255,0.5)',animation:'pop 0.5s ease'}}>
+          <div className="text-3xl font-black text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{saveData.streak.current}日連続!</div>
+          <div className="text-sm text-white/80">すごい！続けてるね！</div>
+        </div>
+      )}
+
+      {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} />}
+      {gs===GAME_STATES.PLAYING&&<GameScreen grade={sg} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
+      {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} onRetry={()=>{setWrongThisGame([]);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
       {gs===GAME_STATES.IDIOM_MENU&&<IdiomMenu onStartLearn={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_LEARN);}} onStartTest={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_TEST);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
       {gs===GAME_STATES.IDIOM_LEARN&&<IdiomLearnMode grade={sg} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)} onFinish={(r)=>handleIdiomEnd(r)}/>}
       {gs===GAME_STATES.IDIOM_TEST&&<IdiomTestMode grade={sg} onGameEnd={handleIdiomEnd} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)}/>}
-      {gs===GAME_STATES.IDIOM_RESULT&&<ResultScreen result={gr} grade={sg} title="熟語テスト結果" onRetry={()=>setGs(GAME_STATES.IDIOM_TEST)} onMenu={()=>{setGs(GAME_STATES.IDIOM_MENU);setGr(null);}} highScore={ihs[sg]}/>}
+      {gs===GAME_STATES.IDIOM_RESULT&&<ResultScreen result={gr} grade={sg} title="熟語テスト結果" onRetry={()=>setGs(GAME_STATES.IDIOM_TEST)} onMenu={()=>{setGs(GAME_STATES.IDIOM_MENU);setGr(null);}} highScore={ihs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
+      {gs==='REVIEW'&&<ReviewScreen wrongHistory={saveData.wrongHistory} onStartReview={handleStartReview} onBack={()=>setGs(GAME_STATES.MENU)} />}
     </>
   );
 }
