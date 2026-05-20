@@ -609,7 +609,20 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,highScores,saveData,
           </button>))}
         </div>
       </div>
-      {selectedGrade&&<button className="flex items-center gap-4 px-12 py-5 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',boxShadow:'0 10px 40px rgba(196,78,255,0.4)',animation:'pop 0.3s ease'}} onClick={()=>onStartGame(selectedGrade)}><span className="text-2xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>ゲームスタート！</span><span className="text-3xl">🚀</span></button>}
+      {selectedGrade&&<div className="flex flex-col items-center gap-3" style={{animation:'pop 0.3s ease'}}>
+        <button className="flex items-center gap-4 px-12 py-5 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',boxShadow:'0 10px 40px rgba(196,78,255,0.4)'}} onClick={()=>onStartGame(selectedGrade,'normal')}>
+          <span className="text-2xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>🚀 ノーマル</span>
+          <span className="text-sm text-white/60">10問</span>
+        </button>
+        <div className="flex gap-3">
+          <button className="flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 6px 20px rgba(255,142,83,0.3)'}} onClick={()=>onStartGame(selectedGrade,'timeattack')}>
+            <span className="text-lg text-gray-900 font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>⏱ タイムアタック</span>
+          </button>
+          <button className="flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff3366)',boxShadow:'0 6px 20px rgba(255,51,102,0.3)'}} onClick={()=>onStartGame(selectedGrade,'survival')}>
+            <span className="text-lg text-white font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>❤️ サバイバル</span>
+          </button>
+        </div>
+      </div>}
 
       {/* サブメニュー */}
       <div className="flex flex-wrap gap-3 justify-center">
@@ -627,34 +640,160 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,highScores,saveData,
 };
 
 // ======== ゲーム画面 ========
-const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions})=>{
+// ======== コンボマイルストーン演出 ========
+const ComboMilestone = ({combo, show}) => {
+  if (!show) return null;
+  const milestones = {3:{text:'NICE!',emoji:'🔥',color:'#ffd93d'},5:{text:'GREAT!',emoji:'⚡',color:'#00d9ff'},7:{text:'AMAZING!',emoji:'💫',color:'#c44eff'},10:{text:'UNSTOPPABLE!',emoji:'👑',color:'#ff6b9d'}};
+  const m = milestones[combo];
+  if (!m) return null;
+  return (
+    <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[60]" style={{animation:'pop 0.5s ease'}}>
+      <div className="flex flex-col items-center gap-2">
+        <span className="text-7xl" style={{animation:'bounce 0.5s ease infinite'}}>{m.emoji}</span>
+        <span className="text-4xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:m.color,textShadow:`0 0 30px ${m.color}80`}}>{m.text}</span>
+        <span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>×{combo} COMBO</span>
+      </div>
+    </div>
+  );
+};
+
+// ======== パーティクル（紙吹雪）========
+const ConfettiExplosion = ({show}) => {
+  if (!show) return null;
+  const particles = Array.from({length:20}, (_, i) => {
+    const angle = (i / 20) * Math.PI * 2;
+    const speed = 80 + Math.random() * 120;
+    const colors = ['#ff6b9d','#ffd93d','#00d9ff','#6bff8e','#c44eff','#ff8e53'];
+    return {
+      x: Math.cos(angle) * speed,
+      y: Math.sin(angle) * speed - 50,
+      color: colors[i % colors.length],
+      size: 6 + Math.random() * 6,
+      delay: Math.random() * 0.2,
+    };
+  });
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[55]">
+      {particles.map((p, i) => (
+        <div key={i} style={{
+          position:'absolute',left:'50%',top:'50%',
+          width:p.size,height:p.size,borderRadius:'50%',
+          background:p.color,
+          animation:`confetti-fly 0.8s ease-out ${p.delay}s forwards`,
+          '--tx':`${p.x}px`,'--ty':`${p.y}px`,
+          opacity:0,
+        }}/>
+      ))}
+    </div>
+  );
+};
+
+const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='normal'})=>{
   const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(15);const[cc,setCc]=useState(0);const[showHint,setShowHint]=useState(false);const[fb,setFb]=useState(null);const[me,setMe]=useState('thinking');const[mm,setMm]=useState('がんばれ〜！');const[showExit,setShowExit]=useState(false);const tRef=useRef(null);const handleAnswerRef=useRef(null);
+  const[recentResults,setRecentResults]=useState([]); // adaptive difficulty tracking
+  const[comboMilestone,setComboMilestone]=useState(false);
+  const[showConfetti,setShowConfetti]=useState(false);
+  const[lives,setLives]=useState(gameMode==='survival'?3:null); // survival mode
+  const[totalTime,setTotalTime]=useState(gameMode==='timeattack'?60:null); // time attack
+  const totalTimeRef=useRef(totalTime);
   const color=gradeColors[grade];
+
+  // Adaptive difficulty: adjust time based on recent performance
+  const getAdaptiveTime = () => {
+    if (recentResults.length < 3) return 15;
+    const recentAcc = recentResults.slice(-5).filter(Boolean).length / Math.min(recentResults.length, 5);
+    if (recentAcc >= 0.8) return 12; // doing well → less time
+    if (recentAcc <= 0.4) return 20; // struggling → more time
+    return 15;
+  };
+
   useEffect(()=>{
     if (reviewQuestions && reviewQuestions.length > 0) {
       const shuffled = shuffleArray([...reviewQuestions]).slice(0, 10);
       setQuestions(shuffled);
     } else {
-      setQuestions(getRandomQuestions(grade,10));
+      const count = gameMode === 'normal' ? 10 : gameMode === 'survival' ? 50 : 30;
+      setQuestions(getRandomQuestions(grade, count));
     }
   },[grade]);
+
   const handleAnswer=useCallback((si)=>{
     if(fb!==null)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
-    if(ok){const pts=100+Math.floor(timeLeft*10)+combo*50;setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);setFb({type:'correct',points:pts});const ms=['すごい！','ナイス！','完璧！','その調子！','天才！'];setMm(ms[Math.floor(Math.random()*ms.length)]);setMe(combo>=2?'excited':'happy');playCorrectChime();setTimeout(()=>playSound(cq.options[cq.answer]),300);}
-    else{setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(cq.options[cq.answer]),500);if(onWrong)onWrong(cq);}
-    setTimeout(()=>{setFb(null);setShowHint(false);setMe('thinking');setMm('');if(ci+1>=questions.length){onGameEnd({score:ok?score+100+Math.floor(timeLeft*10)+combo*50:score,correctCount:ok?cc+1:cc,maxCombo:Math.max(maxCombo,ok?combo+1:maxCombo),totalQuestions:questions.length});}else{setCi(p=>p+1);setTimeLeft(15);}},ok?1500:3000);
-  },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd]);
+    setRecentResults(prev => [...prev, ok]);
+
+    if(ok){
+      const pts=100+Math.floor(timeLeft*10)+combo*50;
+      setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);
+      setFb({type:'correct',points:pts});
+      // Combo milestone check
+      const newCombo = combo + 1;
+      if ([3,5,7,10].includes(newCombo)) {
+        setComboMilestone(true);
+        setShowConfetti(true);
+        playLevelUpSound();
+        setTimeout(() => { setComboMilestone(false); setShowConfetti(false); }, 1500);
+      }
+      const ms = newCombo >= 10 ? ['神！','最強！','レジェンド！'] : newCombo >= 5 ? ['すごい！','天才！','完璧！'] : ['ナイス！','いいね！','その調子！'];
+      setMm(ms[Math.floor(Math.random()*ms.length)]);
+      setMe(newCombo>=5?'excited':'happy');
+      playCorrectChime();setTimeout(()=>playSound(cq.options[cq.answer]),300);
+    } else {
+      setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(cq.options[cq.answer]),500);if(onWrong)onWrong(cq);
+      if (gameMode === 'survival' && lives !== null) setLives(prev => prev - 1);
+    }
+
+    const endGame = (isCorrect) => {
+      const finalScore = isCorrect ? score+100+Math.floor(timeLeft*10)+combo*50 : score;
+      const finalCorrect = isCorrect ? cc+1 : cc;
+      onGameEnd({score:finalScore, correctCount:finalCorrect, maxCombo:Math.max(maxCombo, isCorrect?combo+1:maxCombo), totalQuestions:ci+1, mode:gameMode});
+    };
+
+    setTimeout(()=>{
+      setFb(null);setShowHint(false);setMe('thinking');setMm('');
+      // Survival: check lives
+      if (gameMode === 'survival' && !ok && lives <= 1) { endGame(false); return; }
+      // Normal/TimeAttack: check if questions exhausted
+      if(ci+1>=questions.length){ endGame(ok); }
+      else { setCi(p=>p+1); setTimeLeft(getAdaptiveTime()); }
+    },ok?1200:2500);
+  },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd,lives,gameMode,recentResults]);
   handleAnswerRef.current=handleAnswer;
-  useEffect(()=>{if(!questions.length)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return 15;}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
+
+  // Question timer
+  useEffect(()=>{if(!questions.length)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
+
+  // Time attack global timer
+  useEffect(()=>{
+    if (gameMode !== 'timeattack' || !questions.length) return;
+    const interval = setInterval(()=>{
+      setTotalTime(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          onGameEnd({score, correctCount:cc, maxCombo, totalQuestions:ci, mode:'timeattack'});
+          return 0;
+        }
+        totalTimeRef.current = prev - 1;
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  },[questions.length]);
   if(!questions.length)return<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   const cq=questions[ci];const prog=((ci+1)/questions.length)*100;const tc=timeLeft<=5?'#ff6b6b':timeLeft<=10?'#ffd93d':'#6bff8e';
   return(
     <div className="min-h-screen p-4" style={{background:`radial-gradient(circle at 30% 70%,${color}15 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)`}}>
       <ComboEffect combo={combo}/>
-      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>{setShowExit(false);clearInterval(tRef.current);tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return 15;}return p-1;});},1000);}}/>
+      <ComboMilestone combo={combo} show={comboMilestone}/>
+      <ConfettiExplosion show={showConfetti}/>
+      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>{setShowExit(false);clearInterval(tRef.current);tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);}}/>
       <div className="flex justify-between items-center p-4 rounded-2xl mb-6" style={{background:'rgba(37,37,66,0.8)'}}>
         <button className="p-2 rounded-xl hover:bg-white/10 transition-all mr-2" onClick={()=>{clearInterval(tRef.current);setShowExit(true);}}><span className="text-2xl">←</span></button>
-        <div className="flex items-center gap-4"><div className="px-4 py-2 rounded-full text-lg font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div><div className="flex flex-col"><span className="text-xs text-gray-400">SCORE</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div></div>
+        <div className="flex items-center gap-4">
+          <div className="px-4 py-2 rounded-full text-lg font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div>
+          <div className="flex flex-col"><span className="text-xs text-gray-400">SCORE</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div>
+          {gameMode==='survival'&&lives!==null&&<div className="flex gap-1">{[...Array(3)].map((_,i)=>(<span key={i} className="text-xl" style={{opacity:i<lives?1:0.2}}>{i<lives?'❤️':'🖤'}</span>))}</div>}
+          {gameMode==='timeattack'&&totalTime!==null&&<div className="flex flex-col items-center"><span className="text-xs text-gray-400">TIME</span><span className="text-xl font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif",color:totalTime<=10?'#ff6b6b':totalTime<=30?'#ffd93d':'#6bff8e'}}>{totalTime}s</span></div>}
+        </div>
         <div className="flex-1 max-w-xs mx-4"><div className="text-center text-sm text-gray-400 mb-2">{ci+1}/{questions.length}</div><div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div></div>
         <div className="relative w-14 h-14"><svg viewBox="0 0 36 36" className="w-full h-full -rotate-90"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#252542" strokeWidth="3"/><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={tc} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${(timeLeft/15)*100},100`} className="transition-all duration-1000"/></svg><span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:tc}}>{timeLeft}</span></div>
       </div>
@@ -1037,7 +1176,8 @@ export default function App(){
     });
   };
 
-  const handleStartGame = (g) => { setSg(g); setGs(GAME_STATES.PLAYING); setWrongThisGame([]); };
+  const [gameMode, setGameMode] = useState('normal');
+  const handleStartGame = (g, mode='normal') => { setSg(g); setGameMode(mode); setGs(GAME_STATES.PLAYING); setWrongThisGame([]); };
 
   const handleGameEnd = (r) => {
     setGr(r);
@@ -1108,6 +1248,7 @@ export default function App(){
         @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
         @keyframes shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-5px)}20%,40%,60%,80%{transform:translateX(5px)}}
         @keyframes rainbow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        @keyframes confetti-fly{0%{transform:translate(0,0) rotate(0deg);opacity:1}100%{transform:translate(var(--tx),var(--ty)) rotate(720deg);opacity:0}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
         @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,217,61,0.3)}50%{box-shadow:0 0 40px rgba(255,217,61,0.6)}}
         *{box-sizing:border-box}body{margin:0;padding:0}
@@ -1130,7 +1271,7 @@ export default function App(){
       )}
 
       {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} />}
-      {gs===GAME_STATES.PLAYING&&<GameScreen grade={sg} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
+      {gs===GAME_STATES.PLAYING&&<GameScreen grade={sg} gameMode={gameMode} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
       {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} onRetry={()=>{setWrongThisGame([]);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
       {gs===GAME_STATES.IDIOM_MENU&&<IdiomMenu onStartLearn={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_LEARN);}} onStartTest={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_TEST);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
       {gs===GAME_STATES.IDIOM_LEARN&&<IdiomLearnMode grade={sg} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)} onFinish={(r)=>handleIdiomEnd(r)}/>}
