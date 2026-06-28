@@ -814,46 +814,62 @@ const ConfettiExplosion = ({show}) => {
 
 // ======== ブーストラン（コンボ3で発動するミニゲーム）========
 const BoostRun = ({combo, color, onComplete}) => {
-  const [playerY, setPlayerY] = useState(0); // 0=地上, 1=ジャンプ中
+  const [playerY, setPlayerY] = useState(0);
   const [obstacles, setObstacles] = useState([]);
   const [runTime, setRunTime] = useState(0);
   const [dodged, setDodged] = useState(0);
   const [hit, setHit] = useState(false);
   const [done, setDone] = useState(false);
+  const [countdown, setCountdown] = useState(3); // 準備カウントダウン
+  const [started, setStarted] = useState(false);
   const frameRef = useRef(null);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(null);
   const jumpRef = useRef(false);
   const obstaclesRef = useRef([]);
   const hitRef = useRef(false);
   const dodgedRef = useRef(0);
-  const DURATION = 4500;
+  const RUN_DURATION = 6000;
+  const OBSTACLE_SPEED = 2000; // ms for obstacle to cross screen (slow)
   const monsters = ['👾','👻','🦇','💀','🐉','👹','🧟','🎃'];
 
-  // 障害物を生成（ランダム間隔で3-4体）
+  // カウントダウン（3→2→1→GO!）
   useEffect(() => {
+    if (countdown <= 0) {
+      setStarted(true);
+      startRef.current = Date.now();
+      return;
+    }
+    const t = setTimeout(() => setCountdown(c => c - 1), 800);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  // 障害物を生成（カウントダウン後、最初の1体は1.5秒後から）
+  useEffect(() => {
+    if (!started) return;
     const count = 3 + Math.floor(Math.random() * 2);
-    const spacing = DURATION / (count + 1);
+    const spacing = (RUN_DURATION - 1500) / count;
     const obs = Array.from({length: count}, (_, i) => ({
       id: i,
-      spawnAt: spacing * (i + 1) - 200 + Math.random() * 400,
+      spawnAt: 1500 + spacing * i + Math.random() * 400,
       x: 110,
       emoji: monsters[Math.floor(Math.random() * monsters.length)],
       passed: false,
-      size: 0.8 + Math.random() * 0.6,
+      size: 0.8 + Math.random() * 0.5,
     }));
     obstaclesRef.current = obs;
     setObstacles(obs);
-  }, []);
+  }, [started]);
 
   // ゲームループ
   useEffect(() => {
+    if (!started) return;
     const loop = () => {
       const elapsed = Date.now() - startRef.current;
       setRunTime(elapsed);
 
-      if (elapsed >= DURATION && !hitRef.current) {
+      if (elapsed >= RUN_DURATION && !hitRef.current) {
         setDone(true);
-        setTimeout(() => onComplete({ dodged: dodgedRef.current, hit: false, bonus: dodgedRef.current * 150 }), 1000);
+        setTimeout(() => onComplete({ dodged: dodgedRef.current, hit: false, bonus: dodgedRef.current * 150 }), 1200);
         return;
       }
       if (hitRef.current) return;
@@ -861,7 +877,7 @@ const BoostRun = ({combo, color, onComplete}) => {
       // 障害物移動
       const updated = obstaclesRef.current.map(ob => {
         if (elapsed < ob.spawnAt) return ob;
-        const progress = (elapsed - ob.spawnAt) / 1200;
+        const progress = (elapsed - ob.spawnAt) / OBSTACLE_SPEED;
         const newX = 110 - progress * 130;
 
         // 衝突判定（プレイヤーx=15%, 幅10%）
@@ -888,19 +904,19 @@ const BoostRun = ({combo, color, onComplete}) => {
     };
     frameRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frameRef.current);
-  }, []);
+  }, [started]);
 
   // ジャンプ処理
   const handleJump = useCallback(() => {
-    if (jumpRef.current || hitRef.current || done) return;
+    if (!started || jumpRef.current || hitRef.current || done) return;
     jumpRef.current = true;
     setPlayerY(1);
     playCorrectChime();
     setTimeout(() => {
       jumpRef.current = false;
       setPlayerY(0);
-    }, 600);
-  }, [done]);
+    }, 700);
+  }, [done, started]);
 
   // キーボード
   useEffect(() => {
@@ -909,7 +925,7 @@ const BoostRun = ({combo, color, onComplete}) => {
     return () => window.removeEventListener('keydown', handleKey);
   }, [handleJump]);
 
-  const progress = Math.min(100, (runTime / DURATION) * 100);
+  const progress = started ? Math.min(100, (runTime / RUN_DURATION) * 100) : 0;
 
   return (
     <div
@@ -918,56 +934,68 @@ const BoostRun = ({combo, color, onComplete}) => {
       onClick={handleJump}
       onTouchStart={(e) => { e.preventDefault(); handleJump(); }}
     >
+      {/* カウントダウン */}
+      {!started && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+          <div className="text-2xl font-bold text-white mb-4" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>モンスターを避けろ！</div>
+          <div className="text-lg text-gray-400 mb-6" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>タップでジャンプ！</div>
+          <div className="text-8xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d',animation:'pop 0.5s ease',textShadow:'0 0 40px rgba(255,217,61,0.6)'}}>
+            {countdown > 0 ? countdown : 'GO!'}
+          </div>
+        </div>
+      )}
+
       {/* ヘッダー */}
       <div className="absolute top-4 left-0 right-0 flex justify-center gap-6 z-10">
         <div className="px-4 py-2 rounded-full text-sm font-bold" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',fontFamily:"'Dela Gothic One',sans-serif",color:'white'}}>
           BOOST RUN! ×{combo}
         </div>
-        <div className="px-4 py-2 rounded-full text-sm font-bold" style={{background:'rgba(107,255,142,0.2)',color:'#6bff8e'}}>
+        {started && <div className="px-4 py-2 rounded-full text-sm font-bold" style={{background:'rgba(107,255,142,0.2)',color:'#6bff8e'}}>
           避けた: {dodged}
-        </div>
+        </div>}
       </div>
 
       {/* プログレス */}
-      <div className="absolute top-16 left-4 right-4">
-        <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+      {started && <div className="absolute top-16 left-4 right-4">
+        <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
           <div className="h-full rounded-full transition-all" style={{width:`${progress}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/>
         </div>
-      </div>
+      </div>}
 
       {/* ゲームエリア */}
-      <div className="relative w-full" style={{height:'200px',maxWidth:'500px'}}>
+      <div className="relative w-full" style={{height:'220px',maxWidth:'500px',opacity:started?1:0.3}}>
         {/* 地面 */}
-        <div className="absolute bottom-0 left-0 right-0 h-1" style={{background:'linear-gradient(90deg,#c44eff40,#00d9ff40)'}}/>
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-full" style={{background:'linear-gradient(90deg,#c44eff60,#00d9ff60)'}}/>
 
-        {/* 背景星 */}
-        {Array.from({length:15}).map((_,i)=>(
+        {/* 背景星（固定位置に変更） */}
+        {useMemo(() => Array.from({length:20}).map((_,i)=>(
           <div key={i} className="absolute rounded-full" style={{
-            width: 2 + Math.random()*3, height: 2 + Math.random()*3,
-            background:'#fff', opacity: 0.3 + Math.random()*0.5,
-            top: `${Math.random()*60}%`, left: `${(i*7 + runTime*0.02) % 110 - 5}%`,
+            width: 2 + (i%3)*1.5, height: 2 + (i%3)*1.5,
+            background:'#fff', opacity: 0.2 + (i%5)*0.1,
+            top: `${(i*13)%65}%`, left: `${(i*7)%100}%`,
           }}/>
-        ))}
+        )), [])}
 
         {/* プレイヤー */}
-        <div className="absolute transition-all duration-200 ease-out" style={{
-          left: '15%',
-          bottom: playerY ? '110px' : '8px',
-          fontSize: '3rem',
+        <div className="absolute" style={{
+          left: '12%',
+          bottom: playerY ? '120px' : '12px',
+          fontSize: '3.5rem',
           filter: hit ? 'brightness(0.3)' : 'none',
           animation: hit ? 'shake 0.3s ease' : undefined,
+          transition: 'bottom 0.25s ease-out',
         }}>
           {hit ? '💥' : '🏃'}
         </div>
 
         {/* 障害物 */}
-        {obstacles.map(ob => {
+        {started && obstacles.map(ob => {
           if (runTime < ob.spawnAt || ob.x < -10) return null;
           return (
             <div key={ob.id} className="absolute" style={{
               left: `${ob.x}%`,
-              bottom: '8px',
-              fontSize: `${2.5 * ob.size}rem`,
+              bottom: '12px',
+              fontSize: `${2.8 * ob.size}rem`,
               transition: 'none',
               opacity: ob.x < 0 ? 0 : 1,
             }}>
@@ -977,10 +1005,10 @@ const BoostRun = ({combo, color, onComplete}) => {
         })}
       </div>
 
-      {/* 指示 */}
-      {!hit && !done && (
-        <div className="mt-8 text-center" style={{animation:'pulse 1s infinite'}}>
-          <span className="text-lg font-bold text-white/60" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>タップでジャンプ！</span>
+      {/* 操作ヒント */}
+      {started && !hit && !done && (
+        <div className="mt-6 text-center">
+          <span className="text-base font-bold text-white/40" style={{fontFamily:"'Noto Sans JP',sans-serif",animation:'pulse 1.5s infinite'}}>👆 タップでジャンプ</span>
         </div>
       )}
 
