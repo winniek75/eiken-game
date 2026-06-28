@@ -541,6 +541,17 @@ const generateDobbleRound = (items, itemsPerCard = 5) => {
   return { card1, card2, matchWord: matchItem.word };
 };
 const DOBBLE_ROUNDS = 10;
+
+// 丸いカード内にアイテムを円形に配置するための座標計算
+const getCircularPosition = (idx, total, radiusPercent) => {
+  if (total === 1) return { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' };
+  // 1つは中央、残りは周囲に配置
+  if (idx === 0) return { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' };
+  const angle = ((idx - 1) / (total - 1)) * Math.PI * 2 - Math.PI / 2;
+  const x = 50 + Math.cos(angle) * radiusPercent;
+  const y = 50 + Math.sin(angle) * radiusPercent;
+  return { top: `${y}%`, left: `${x}%`, transform: 'translate(-50%,-50%)' };
+};
 const gradeColors={5:'#00d9ff',4:'#ffd93d',3:'#ff6b9d'};
 const optLabels=['A','B','C','D'];
 
@@ -1306,30 +1317,61 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
 
   const prog = ((round) / DOBBLE_ROUNDS) * 100;
 
-  // カードアイテムのレンダリング
-  const renderCardItem = (item, idx, cardIdx) => {
-    const si = cardIdx * 5 + idx;
-    const sz = cardSizes[si] || { scale: 1, rotate: 0 };
+  // 英単語アイテム（Card1用）
+  const renderWordItem = (item, idx) => {
+    const sz = cardSizes[idx] || { scale: 1, rotate: 0 };
     const isMatch = fb && item.word === roundData.matchWord;
     const isWrong = fb?.type === 'wrong' && item.word === fb.word;
     return (
       <button
-        key={item.word + cardIdx}
-        className="flex flex-col items-center gap-1 p-1 rounded-xl transition-all"
+        key={item.word + 'w'}
+        className="transition-all duration-200 select-none"
         style={{
           transform: `scale(${sz.scale}) rotate(${sz.rotate}deg)`,
-          opacity: fb && !isMatch ? 0.4 : 1,
-          background: isMatch ? 'rgba(107,255,142,0.3)' : isWrong ? 'rgba(255,107,107,0.3)' : 'transparent',
-          border: isMatch ? '2px solid #6bff8e' : isWrong ? '2px solid #ff6b6b' : '2px solid transparent',
-          animation: isMatch ? 'pop 0.3s ease' : undefined,
+          opacity: fb && !isMatch ? 0.35 : 1,
+          position: 'absolute',
+          ...getCircularPosition(idx, 5, 32),
         }}
         onClick={() => handleTap(item.word)}
         disabled={!!fb}
       >
-        <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden shadow-md">
-          <img src={item.img} alt={item.word} className="w-full h-full object-cover" loading="eager"/>
+        <span className="px-3 py-1.5 rounded-full font-bold text-sm md:text-base whitespace-nowrap" style={{
+          fontFamily:"'Inter',sans-serif",
+          color: isMatch ? '#1a1a2e' : isWrong ? '#fff' : '#fff',
+          background: isMatch ? '#6bff8e' : isWrong ? '#ff6b6b' : 'rgba(255,255,255,0.1)',
+          border: isMatch ? '2px solid #6bff8e' : isWrong ? '2px solid #ff6b6b' : '2px solid rgba(255,255,255,0.15)',
+          boxShadow: isMatch ? '0 0 20px rgba(107,255,142,0.5)' : 'none',
+          animation: isMatch ? 'pop 0.3s ease' : undefined,
+        }}>{item.word}</span>
+      </button>
+    );
+  };
+
+  // 写真アイテム（Card2用）
+  const renderPhotoItem = (item, idx) => {
+    const sz = cardSizes[5 + idx] || { scale: 1, rotate: 0 };
+    const isMatch = fb && item.word === roundData.matchWord;
+    const isWrong = fb?.type === 'wrong' && item.word === fb.word;
+    return (
+      <button
+        key={item.word + 'p'}
+        className="transition-all duration-200 select-none"
+        style={{
+          transform: `scale(${sz.scale}) rotate(${sz.rotate}deg)`,
+          opacity: fb && !isMatch ? 0.35 : 1,
+          position: 'absolute',
+          ...getCircularPosition(idx, 5, 32),
+        }}
+        onClick={() => handleTap(item.word)}
+        disabled={!!fb}
+      >
+        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden shadow-lg" style={{
+          border: isMatch ? '3px solid #6bff8e' : isWrong ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.15)',
+          boxShadow: isMatch ? '0 0 20px rgba(107,255,142,0.5)' : isWrong ? '0 0 20px rgba(255,107,107,0.5)' : '0 4px 12px rgba(0,0,0,0.4)',
+          animation: isMatch ? 'pop 0.3s ease' : undefined,
+        }}>
+          <img src={item.img} alt={item.meaning} className="w-full h-full object-cover" loading="eager"/>
         </div>
-        <span className="text-xs md:text-sm font-bold text-white" style={{fontFamily:"'Inter',sans-serif"}}>{item.word}</span>
       </button>
     );
   };
@@ -1339,7 +1381,7 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
       <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>setShowExit(false)}/>
 
       {/* Header */}
-      <div className="flex justify-between items-center p-3 rounded-2xl mb-3" style={{background:'rgba(37,37,66,0.8)'}}>
+      <div className="flex justify-between items-center p-3 rounded-2xl mb-2" style={{background:'rgba(37,37,66,0.8)'}}>
         <button className="p-2 rounded-xl hover:bg-white/10 transition-all" onClick={()=>{clearInterval(tRef.current);setShowExit(true);}}><span className="text-2xl">←</span></button>
         <div className="flex items-center gap-3">
           <div className="px-3 py-1 rounded-full text-sm font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div>
@@ -1350,42 +1392,42 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
       </div>
 
       {/* Progress */}
-      <div className="w-full max-w-lg mx-auto mb-2">
-        <div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div>
+      <div className="w-full max-w-lg mx-auto mb-1">
+        <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div>
       </div>
 
-      {/* Instruction */}
-      <div className="text-center mb-2">
-        <span className="text-sm font-bold px-4 py-1 rounded-full" style={{background:'rgba(255,217,61,0.15)',color:'#ffd93d',fontFamily:"'Noto Sans JP',sans-serif"}}>
-          同じ単語をタップ！
+      {/* Instruction + Timer */}
+      <div className="text-center mb-1">
+        <span className="text-xs font-bold px-3 py-1 rounded-full" style={{background:'rgba(255,217,61,0.15)',color:'#ffd93d',fontFamily:"'Noto Sans JP',sans-serif"}}>
+          同じものをタップ！
         </span>
-        {!fb && <div className="text-xs text-gray-500 mt-1" style={{fontFamily:"'Inter',sans-serif"}}>{roundTime.toFixed(1)}s</div>}
+        {!fb && <span className="text-xs text-gray-500 ml-2" style={{fontFamily:"'Inter',sans-serif"}}>{roundTime.toFixed(1)}s</span>}
       </div>
 
-      {/* Two Cards */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 max-w-lg mx-auto w-full">
+      {/* Two Round Cards */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-2 max-w-sm mx-auto w-full">
 
-        {/* Card 1 */}
-        <div className="w-full rounded-3xl p-4 relative" style={{background:'radial-gradient(circle at 30% 30%,rgba(0,217,255,0.1) 0%,transparent 60%),rgba(37,37,66,0.9)',border:'2px solid rgba(0,217,255,0.2)',boxShadow:'0 8px 32px rgba(0,0,0,0.3)'}}>
-          <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Card 1</div>
-          <div className="flex flex-wrap justify-center gap-3 pt-3">
-            {roundData.card1.map((item, i) => renderCardItem(item, i, 0))}
+        {/* Card 1: 英単語のみ（丸いカード） */}
+        <div className="relative" style={{width:'min(80vw, 300px)',height:'min(80vw, 300px)'}}>
+          <div className="absolute inset-0 rounded-full" style={{background:'radial-gradient(circle at 40% 35%,rgba(0,217,255,0.12) 0%,rgba(37,37,66,0.95) 70%)',border:'3px solid rgba(0,217,255,0.25)',boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,217,255,0.05)'}}>
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-cyan-400/60 uppercase tracking-widest">ABC</div>
           </div>
+          {roundData.card1.map((item, i) => renderWordItem(item, i))}
         </div>
 
-        {/* VS divider */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-[1px] bg-gray-600"/>
-          <span className="text-sm font-bold text-gray-500" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>VS</span>
-          <div className="w-12 h-[1px] bg-gray-600"/>
+        {/* VS */}
+        <div className="flex items-center gap-2 -my-1 z-10">
+          <div className="w-8 h-[1px] bg-gray-600"/>
+          <span className="text-xs font-bold text-gray-500" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>VS</span>
+          <div className="w-8 h-[1px] bg-gray-600"/>
         </div>
 
-        {/* Card 2 */}
-        <div className="w-full rounded-3xl p-4 relative" style={{background:'radial-gradient(circle at 70% 70%,rgba(255,107,157,0.1) 0%,transparent 60%),rgba(37,37,66,0.9)',border:'2px solid rgba(255,107,157,0.2)',boxShadow:'0 8px 32px rgba(0,0,0,0.3)'}}>
-          <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Card 2</div>
-          <div className="flex flex-wrap justify-center gap-3 pt-3">
-            {roundData.card2.map((item, i) => renderCardItem(item, i, 1))}
+        {/* Card 2: 写真のみ（丸いカード） */}
+        <div className="relative" style={{width:'min(80vw, 300px)',height:'min(80vw, 300px)'}}>
+          <div className="absolute inset-0 rounded-full" style={{background:'radial-gradient(circle at 60% 65%,rgba(255,107,157,0.12) 0%,rgba(37,37,66,0.95) 70%)',border:'3px solid rgba(255,107,157,0.25)',boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 0 60px rgba(255,107,157,0.05)'}}>
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-pink-400/60 uppercase tracking-widest">📷</div>
           </div>
+          {roundData.card2.map((item, i) => renderPhotoItem(item, i))}
         </div>
       </div>
 
@@ -1397,7 +1439,7 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
               <>
                 <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl" style={{background:'#6bff8e',boxShadow:'0 0 40px rgba(107,255,142,0.6)'}}>✓</div>
                 <span className="text-2xl font-black" style={{color:'#6bff8e',fontFamily:"'Inter',sans-serif"}}>+{fb.points}pt</span>
-                <span className="text-sm text-gray-400">{fb.elapsed}秒 ⚡</span>
+                <span className="text-sm text-gray-400">{fb.elapsed}秒</span>
               </>
             ) : (
               <>
