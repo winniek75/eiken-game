@@ -444,88 +444,88 @@ const GAME_STATES={MENU:'menu',PLAYING:'playing',RESULT:'result',IDIOM_MENU:'idi
 // 各アイテム: 英単語 + 意味 + 写真 (Unsplash free)
 const dobbleItems = {
   5: [
-    { word: 'dog', meaning: '犬', img: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&h=200&fit=crop' },
-    { word: 'cat', meaning: '猫', img: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&h=200&fit=crop' },
-    { word: 'bird', meaning: '鳥', img: 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=200&h=200&fit=crop' },
-    { word: 'fish', meaning: '魚', img: 'https://images.unsplash.com/photo-1524704654690-b56c05c78a00?w=200&h=200&fit=crop' },
-    { word: 'rabbit', meaning: 'うさぎ', img: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=200&h=200&fit=crop' },
-    { word: 'bear', meaning: 'くま', img: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=200&h=200&fit=crop' },
-    { word: 'elephant', meaning: 'ぞう', img: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=200&h=200&fit=crop' },
-    { word: 'lion', meaning: 'ライオン', img: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=200&h=200&fit=crop' },
-    { word: 'apple', meaning: 'りんご', img: 'https://images.unsplash.com/photo-1584306354486-8bc9e10e8e4e?w=200&h=200&fit=crop' },
-    { word: 'banana', meaning: 'バナナ', img: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=200&h=200&fit=crop' },
-    { word: 'orange', meaning: 'オレンジ', img: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=200&h=200&fit=crop' },
-    { word: 'cake', meaning: 'ケーキ', img: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop' },
-    { word: 'egg', meaning: '卵', img: 'https://images.unsplash.com/photo-1582169296194-e4d644c48063?w=200&h=200&fit=crop' },
-    { word: 'book', meaning: '本', img: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=200&h=200&fit=crop' },
-    { word: 'pen', meaning: 'ペン', img: 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=200&h=200&fit=crop' },
-    { word: 'flower', meaning: '花', img: 'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=200&h=200&fit=crop' },
-    { word: 'sun', meaning: '太陽', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop' },
-    { word: 'moon', meaning: '月', img: 'https://images.unsplash.com/photo-1532693322450-2f6e13862879?w=200&h=200&fit=crop' },
-    { word: 'tree', meaning: '木', img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop' },
-    { word: 'car', meaning: '車', img: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=200&h=200&fit=crop' },
-    { word: 'house', meaning: '家', img: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=200&h=200&fit=crop' },
-    { word: 'water', meaning: '水', img: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&h=200&fit=crop' },
-    { word: 'star', meaning: '星', img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop' },
-    { word: 'hat', meaning: '帽子', img: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=200&h=200&fit=crop' },
-    { word: 'clock', meaning: '時計', img: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=200&h=200&fit=crop' },
-    { word: 'umbrella', meaning: '傘', img: 'https://images.unsplash.com/photo-1534309466160-70b22cc6254b?w=200&h=200&fit=crop' },
+    { word: 'dog', meaning: '犬', emoji: '🐕', img: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&h=200&fit=crop' },
+    { word: 'cat', meaning: '猫', emoji: '🐱', img: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&h=200&fit=crop' },
+    { word: 'bird', meaning: '鳥', emoji: '🐦', img: 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=200&h=200&fit=crop' },
+    { word: 'fish', meaning: '魚', emoji: '🐟', img: 'https://images.unsplash.com/photo-1524704654690-b56c05c78a00?w=200&h=200&fit=crop' },
+    { word: 'rabbit', meaning: 'うさぎ', emoji: '🐰', img: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=200&h=200&fit=crop' },
+    { word: 'bear', meaning: 'くま', emoji: '🐻', img: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=200&h=200&fit=crop' },
+    { word: 'elephant', meaning: 'ぞう', emoji: '🐘', img: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=200&h=200&fit=crop' },
+    { word: 'lion', meaning: 'ライオン', emoji: '🦁', img: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=200&h=200&fit=crop' },
+    { word: 'apple', meaning: 'りんご', emoji: '🍎', img: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&h=200&fit=crop' },
+    { word: 'banana', meaning: 'バナナ', emoji: '🍌', img: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=200&h=200&fit=crop' },
+    { word: 'orange', meaning: 'オレンジ', emoji: '🍊', img: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=200&h=200&fit=crop' },
+    { word: 'cake', meaning: 'ケーキ', emoji: '🎂', img: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop' },
+    { word: 'egg', meaning: '卵', emoji: '🥚', img: 'https://images.unsplash.com/photo-1582169296194-e4d644c48063?w=200&h=200&fit=crop' },
+    { word: 'book', meaning: '本', emoji: '📚', img: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=200&h=200&fit=crop' },
+    { word: 'pen', meaning: 'ペン', emoji: '🖊️', img: 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=200&h=200&fit=crop' },
+    { word: 'flower', meaning: '花', emoji: '🌸', img: 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=200&h=200&fit=crop' },
+    { word: 'sun', meaning: '太陽', emoji: '☀️', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop' },
+    { word: 'moon', meaning: '月', emoji: '🌙', img: 'https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?w=200&h=200&fit=crop' },
+    { word: 'tree', meaning: '木', emoji: '🌳', img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop' },
+    { word: 'car', meaning: '車', emoji: '🚗', img: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=200&h=200&fit=crop' },
+    { word: 'house', meaning: '家', emoji: '🏠', img: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=200&h=200&fit=crop' },
+    { word: 'water', meaning: '水', emoji: '💧', img: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&h=200&fit=crop' },
+    { word: 'star', meaning: '星', emoji: '⭐', img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop' },
+    { word: 'hat', meaning: '帽子', emoji: '🎩', img: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=200&h=200&fit=crop' },
+    { word: 'clock', meaning: '時計', emoji: '⏰', img: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=200&h=200&fit=crop' },
+    { word: 'umbrella', meaning: '傘', emoji: '☂️', img: 'https://images.unsplash.com/photo-1517483000871-1dbf64a6e1c6?w=200&h=200&fit=crop' },
   ],
   4: [
-    { word: 'camera', meaning: 'カメラ', img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=200&h=200&fit=crop' },
-    { word: 'mountain', meaning: '山', img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200&h=200&fit=crop' },
-    { word: 'bridge', meaning: '橋', img: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=200&h=200&fit=crop' },
-    { word: 'bicycle', meaning: '自転車', img: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=200&h=200&fit=crop' },
-    { word: 'guitar', meaning: 'ギター', img: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=200&h=200&fit=crop' },
-    { word: 'piano', meaning: 'ピアノ', img: 'https://images.unsplash.com/photo-1520523839897-bd33c68d826d?w=200&h=200&fit=crop' },
-    { word: 'rainbow', meaning: '虹', img: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=200&h=200&fit=crop' },
-    { word: 'library', meaning: '図書館', img: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=200&h=200&fit=crop' },
-    { word: 'hospital', meaning: '病院', img: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=200&h=200&fit=crop' },
-    { word: 'airport', meaning: '空港', img: 'https://images.unsplash.com/photo-1436491865332-7a61a109db05?w=200&h=200&fit=crop' },
-    { word: 'island', meaning: '島', img: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=200&h=200&fit=crop' },
-    { word: 'ocean', meaning: '海', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=200&fit=crop' },
-    { word: 'desert', meaning: '砂漠', img: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=200&h=200&fit=crop' },
-    { word: 'forest', meaning: '森', img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop' },
-    { word: 'castle', meaning: '城', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&h=200&fit=crop' },
-    { word: 'rocket', meaning: 'ロケット', img: 'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=200&h=200&fit=crop' },
-    { word: 'diamond', meaning: 'ダイヤ', img: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=200&h=200&fit=crop' },
-    { word: 'volcano', meaning: '火山', img: 'https://images.unsplash.com/photo-1554232456-8727aae0cfa4?w=200&h=200&fit=crop' },
-    { word: 'candle', meaning: 'ロウソク', img: 'https://images.unsplash.com/photo-1602523961358-f9f03dd557db?w=200&h=200&fit=crop' },
-    { word: 'compass', meaning: 'コンパス', img: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=200&h=200&fit=crop' },
-    { word: 'ladder', meaning: 'はしご', img: 'https://images.unsplash.com/photo-1529446559873-2205a2e4ae4f?w=200&h=200&fit=crop' },
-    { word: 'globe', meaning: '地球儀', img: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=200&h=200&fit=crop' },
-    { word: 'telescope', meaning: '望遠鏡', img: 'https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4f5?w=200&h=200&fit=crop' },
-    { word: 'lighthouse', meaning: '灯台', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop' },
-    { word: 'butterfly', meaning: '蝶', img: 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?w=200&h=200&fit=crop' },
-    { word: 'penguin', meaning: 'ペンギン', img: 'https://images.unsplash.com/photo-1551986782-d0169b3f8fa7?w=200&h=200&fit=crop' },
+    { word: 'camera', meaning: 'カメラ', emoji: '📷', img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=200&h=200&fit=crop' },
+    { word: 'mountain', meaning: '山', emoji: '⛰️', img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200&h=200&fit=crop' },
+    { word: 'bridge', meaning: '橋', emoji: '🌉', img: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=200&h=200&fit=crop' },
+    { word: 'bicycle', meaning: '自転車', emoji: '🚲', img: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=200&h=200&fit=crop' },
+    { word: 'guitar', meaning: 'ギター', emoji: '🎸', img: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=200&h=200&fit=crop' },
+    { word: 'piano', meaning: 'ピアノ', emoji: '🎹', img: 'https://images.unsplash.com/photo-1552422535-c45813c61732?w=200&h=200&fit=crop' },
+    { word: 'rainbow', meaning: '虹', emoji: '🌈', img: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=200&h=200&fit=crop' },
+    { word: 'library', meaning: '図書館', emoji: '📖', img: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=200&h=200&fit=crop' },
+    { word: 'hospital', meaning: '病院', emoji: '🏥', img: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=200&h=200&fit=crop' },
+    { word: 'airport', meaning: '空港', emoji: '✈️', img: 'https://images.unsplash.com/photo-1556388158-158ea5ccacbd?w=200&h=200&fit=crop' },
+    { word: 'island', meaning: '島', emoji: '🏝️', img: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=200&h=200&fit=crop' },
+    { word: 'ocean', meaning: '海', emoji: '🌊', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=200&fit=crop' },
+    { word: 'desert', meaning: '砂漠', emoji: '🏜️', img: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=200&h=200&fit=crop' },
+    { word: 'forest', meaning: '森', emoji: '🌲', img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop' },
+    { word: 'castle', meaning: '城', emoji: '🏰', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&h=200&fit=crop' },
+    { word: 'rocket', meaning: 'ロケット', emoji: '🚀', img: 'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=200&h=200&fit=crop' },
+    { word: 'diamond', meaning: 'ダイヤ', emoji: '💎', img: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=200&h=200&fit=crop' },
+    { word: 'volcano', meaning: '火山', emoji: '🌋', img: 'https://images.unsplash.com/photo-1554232456-8727aae0cfa4?w=200&h=200&fit=crop' },
+    { word: 'candle', meaning: 'ロウソク', emoji: '🕯️', img: 'https://images.unsplash.com/photo-1602523961358-f9f03dd557db?w=200&h=200&fit=crop' },
+    { word: 'compass', meaning: 'コンパス', emoji: '🧭', img: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=200&h=200&fit=crop' },
+    { word: 'ladder', meaning: 'はしご', emoji: '🪜', img: 'https://images.unsplash.com/photo-1416339698674-4f118dd3388b?w=200&h=200&fit=crop' },
+    { word: 'globe', meaning: '地球儀', emoji: '🌍', img: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=200&h=200&fit=crop' },
+    { word: 'telescope', meaning: '望遠鏡', emoji: '🔭', img: 'https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4f5?w=200&h=200&fit=crop' },
+    { word: 'lighthouse', meaning: '灯台', emoji: '🗼', img: 'https://images.unsplash.com/photo-1501901609772-df0848060b33?w=200&h=200&fit=crop' },
+    { word: 'butterfly', meaning: '蝶', emoji: '🦋', img: 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?w=200&h=200&fit=crop' },
+    { word: 'penguin', meaning: 'ペンギン', emoji: '🐧', img: 'https://images.unsplash.com/photo-1551986782-d0169b3f8fa7?w=200&h=200&fit=crop' },
   ],
   3: [
-    { word: 'architecture', meaning: '建築', img: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=200&h=200&fit=crop' },
-    { word: 'sculpture', meaning: '彫刻', img: 'https://images.unsplash.com/photo-1544413660-299165566b1d?w=200&h=200&fit=crop' },
-    { word: 'laboratory', meaning: '研究室', img: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=200&h=200&fit=crop' },
-    { word: 'satellite', meaning: '衛星', img: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=200&h=200&fit=crop' },
-    { word: 'microscope', meaning: '顕微鏡', img: 'https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?w=200&h=200&fit=crop' },
-    { word: 'fossil', meaning: '化石', img: 'https://images.unsplash.com/photo-1560986752-2e31f5c6bab7?w=200&h=200&fit=crop' },
-    { word: 'glacier', meaning: '氷河', img: 'https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=200&h=200&fit=crop' },
-    { word: 'waterfall', meaning: '滝', img: 'https://images.unsplash.com/photo-1494472155656-f34e81b17ddc?w=200&h=200&fit=crop' },
-    { word: 'tornado', meaning: '竜巻', img: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=200&h=200&fit=crop' },
-    { word: 'earthquake', meaning: '地震', img: 'https://images.unsplash.com/photo-1545552987-720aa18145c2?w=200&h=200&fit=crop' },
-    { word: 'constellation', meaning: '星座', img: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=200&h=200&fit=crop' },
-    { word: 'pyramid', meaning: 'ピラミッド', img: 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=200&h=200&fit=crop' },
-    { word: 'cathedral', meaning: '大聖堂', img: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=200&h=200&fit=crop' },
-    { word: 'submarine', meaning: '潜水艦', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop' },
-    { word: 'helicopter', meaning: 'ヘリコプター', img: 'https://images.unsplash.com/photo-1534790566855-4cb788d389ec?w=200&h=200&fit=crop' },
-    { word: 'orchestra', meaning: 'オーケストラ', img: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=200&h=200&fit=crop' },
-    { word: 'treasure', meaning: '宝物', img: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=200&h=200&fit=crop' },
-    { word: 'creature', meaning: '生き物', img: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=200&h=200&fit=crop' },
-    { word: 'fireworks', meaning: '花火', img: 'https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=200&h=200&fit=crop' },
-    { word: 'crystal', meaning: '水晶', img: 'https://images.unsplash.com/photo-1519638831568-d9897f54ed69?w=200&h=200&fit=crop' },
-    { word: 'compass', meaning: '羅針盤', img: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=200&h=200&fit=crop' },
-    { word: 'anchor', meaning: '錨', img: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=200&h=200&fit=crop' },
-    { word: 'parachute', meaning: 'パラシュート', img: 'https://images.unsplash.com/photo-1534281305182-30c3d82e2b28?w=200&h=200&fit=crop' },
-    { word: 'binoculars', meaning: '双眼鏡', img: 'https://images.unsplash.com/photo-1502982899975-893c9cf39028?w=200&h=200&fit=crop' },
-    { word: 'stethoscope', meaning: '聴診器', img: 'https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=200&h=200&fit=crop' },
-    { word: 'thermometer', meaning: '温度計', img: 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?w=200&h=200&fit=crop' },
+    { word: 'architecture', meaning: '建築', emoji: '🏛️', img: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=200&h=200&fit=crop' },
+    { word: 'sculpture', meaning: '彫刻', emoji: '🗿', img: 'https://images.unsplash.com/photo-1544413660-299165566b1d?w=200&h=200&fit=crop' },
+    { word: 'laboratory', meaning: '研究室', emoji: '🔬', img: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=200&h=200&fit=crop' },
+    { word: 'satellite', meaning: '衛星', emoji: '🛰️', img: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=200&h=200&fit=crop' },
+    { word: 'microscope', meaning: '顕微鏡', emoji: '🔬', img: 'https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?w=200&h=200&fit=crop' },
+    { word: 'fossil', meaning: '化石', emoji: '🦴', img: 'https://images.unsplash.com/photo-1519638831568-d9897f54ed69?w=200&h=200&fit=crop' },
+    { word: 'glacier', meaning: '氷河', emoji: '🧊', img: 'https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=200&h=200&fit=crop' },
+    { word: 'waterfall', meaning: '滝', emoji: '💦', img: 'https://images.unsplash.com/photo-1494472155656-f34e81b17ddc?w=200&h=200&fit=crop' },
+    { word: 'tornado', meaning: '竜巻', emoji: '🌪️', img: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=200&h=200&fit=crop' },
+    { word: 'earthquake', meaning: '地震', emoji: '🫨', img: 'https://images.unsplash.com/photo-1504703395950-b89145a5425b?w=200&h=200&fit=crop' },
+    { word: 'constellation', meaning: '星座', emoji: '✨', img: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=200&h=200&fit=crop' },
+    { word: 'pyramid', meaning: 'ピラミッド', emoji: '🔺', img: 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=200&h=200&fit=crop' },
+    { word: 'cathedral', meaning: '大聖堂', emoji: '⛪', img: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=200&h=200&fit=crop' },
+    { word: 'submarine', meaning: '潜水艦', emoji: '🤿', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop' },
+    { word: 'helicopter', meaning: 'ヘリコプター', emoji: '🚁', img: 'https://images.unsplash.com/photo-1534790566855-4cb788d389ec?w=200&h=200&fit=crop' },
+    { word: 'orchestra', meaning: 'オーケストラ', emoji: '🎻', img: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=200&h=200&fit=crop' },
+    { word: 'treasure', meaning: '宝物', emoji: '💰', img: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=200&h=200&fit=crop' },
+    { word: 'creature', meaning: '生き物', emoji: '🦊', img: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=200&h=200&fit=crop' },
+    { word: 'fireworks', meaning: '花火', emoji: '🎆', img: 'https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=200&h=200&fit=crop' },
+    { word: 'crystal', meaning: '水晶', emoji: '💎', img: 'https://images.unsplash.com/photo-1519638831568-d9897f54ed69?w=200&h=200&fit=crop' },
+    { word: 'anchor', meaning: '錨', emoji: '⚓', img: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=200&h=200&fit=crop' },
+    { word: 'parachute', meaning: 'パラシュート', emoji: '🪂', img: 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=200&h=200&fit=crop' },
+    { word: 'binoculars', meaning: '双眼鏡', emoji: '🔭', img: 'https://images.unsplash.com/photo-1502982899975-893c9cf39028?w=200&h=200&fit=crop' },
+    { word: 'stethoscope', meaning: '聴診器', emoji: '🩺', img: 'https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=200&h=200&fit=crop' },
+    { word: 'thermometer', meaning: '温度計', emoji: '🌡️', img: 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?w=200&h=200&fit=crop' },
+    { word: 'hourglass', meaning: '砂時計', emoji: '⏳', img: 'https://images.unsplash.com/photo-1501139083538-0139583c060f?w=200&h=200&fit=crop' },
   ],
 };
 
@@ -1347,11 +1347,15 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
     );
   };
 
-  // 写真アイテム（Card2用）
+  // 写真アイテム（Card2用） - 読み込み失敗時はemojiフォールバック
+  const [imgErrors, setImgErrors] = useState({});
+  const handleImgError = (word) => setImgErrors(prev => ({...prev, [word]: true}));
+
   const renderPhotoItem = (item, idx) => {
     const sz = cardSizes[5 + idx] || { scale: 1, rotate: 0 };
     const isMatch = fb && item.word === roundData.matchWord;
     const isWrong = fb?.type === 'wrong' && item.word === fb.word;
+    const hasFailed = imgErrors[item.word];
     return (
       <button
         key={item.word + 'p'}
@@ -1365,12 +1369,17 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         onClick={() => handleTap(item.word)}
         disabled={!!fb}
       >
-        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden shadow-lg" style={{
+        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden shadow-lg flex items-center justify-center" style={{
           border: isMatch ? '3px solid #6bff8e' : isWrong ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.15)',
           boxShadow: isMatch ? '0 0 20px rgba(107,255,142,0.5)' : isWrong ? '0 0 20px rgba(255,107,107,0.5)' : '0 4px 12px rgba(0,0,0,0.4)',
           animation: isMatch ? 'pop 0.3s ease' : undefined,
+          background: hasFailed ? 'linear-gradient(135deg,#252542,#1a1a2e)' : 'transparent',
         }}>
-          <img src={item.img} alt={item.meaning} className="w-full h-full object-cover" loading="eager"/>
+          {hasFailed ? (
+            <span className="text-3xl">{item.emoji || '❓'}</span>
+          ) : (
+            <img src={item.img} alt={item.meaning} className="w-full h-full object-cover" loading="eager" onError={() => handleImgError(item.word)}/>
+          )}
         </div>
       </button>
     );
