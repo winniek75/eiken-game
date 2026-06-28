@@ -1092,7 +1092,6 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       const timeBonus = gameMode === 'timeattack' ? Math.max(0, Math.floor(totalTimeRef.current * 2)) : Math.floor(timeLeft * 10);
       const pts = 100 + timeBonus + combo * 50;
       setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);
-      setFb({type:'correct',points:pts});
       // Combo milestone check
       if ([3,5,7,10].includes(newCombo) && !shouldBoost) {
         setComboMilestone(true);
@@ -1103,11 +1102,16 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       const ms = newCombo >= 10 ? ['神！','最強！','レジェンド！'] : newCombo >= 5 ? ['すごい！','天才！','完璧！'] : ['ナイス！','いいね！','その調子！'];
       setMm(ms[Math.floor(Math.random()*ms.length)]);
       setMe(newCombo>=5?'excited':'happy');
-      playCorrectChime();setTimeout(()=>playSound(cq.options[cq.answer]),300);
+      playCorrectChime();
+      // 文法/表現問題は完成文を読み上げ、単語問題は正解単語を読み上げ
+      const completeSentence = (cq.type==='grammar'||cq.type==='idiom') ? cq.question.replace(/___+/g, cq.options[cq.answer]) : null;
+      setTimeout(()=>playSound(completeSentence || cq.options[cq.answer]),300);
+      setFb({type:'correct',points:pts,completeSentence,hint:cq.hint});
       // Ref更新（タイムアタック終了時のクロージャ用）
       scoreRef.current=score+pts;ccRef.current=cc+1;ciRef.current=ci;maxComboRef.current=Math.max(maxCombo,combo+1);
     } else {
-      setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(cq.options[cq.answer]),500);if(onWrong)onWrong(cq);
+      const completeSentence = (cq.type==='grammar'||cq.type==='idiom') ? cq.question.replace(/___+/g, cq.options[cq.answer]) : null;
+      setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer],completeSentence,hint:cq.hint});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(completeSentence || cq.options[cq.answer]),500);if(onWrong)onWrong(cq);
       if (gameMode === 'survival' && lives !== null) setLives(prev => prev - 1);
     }
 
@@ -1208,7 +1212,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
         </div>
         <div className="flex flex-col items-center gap-5 md:order-none order-first"><Mascot emotion={me} message={mm}/>{combo>=2&&<div className="px-5 py-3 rounded-xl flex flex-col items-center" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}}><span className="text-xs text-white/80">COMBO</span><span className="text-2xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>×{combo}</span></div>}</div>
       </div>
-      {fb&&<div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"><div className="flex flex-col items-center gap-3" style={{animation:'pop 0.3s ease'}}><div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl font-bold" style={{background:fb.type==='correct'?'#6bff8e':'#ff6b6b',color:fb.type==='correct'?'#1a1a2e':'white',boxShadow:`0 0 40px ${fb.type==='correct'?'rgba(107,255,142,0.6)':'rgba(255,107,107,0.6)'}`}}>{fb.type==='correct'?'✓':'✗'}</div><span className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'正解!':'不正解...'}</span>{fb.type==='correct'?<span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>+{fb.points}pt</span>:<div className="flex flex-col items-center gap-2 mt-2" style={{animation:'slideUp 0.3s ease 0.2s both'}}><span className="text-sm text-gray-400">正解は</span><span className="text-2xl px-6 py-3 rounded-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e',background:'rgba(107,255,142,0.15)',border:'2px solid #6bff8e',boxShadow:'0 0 20px rgba(107,255,142,0.3)'}}>{fb.correctAnswer}</span></div>}</div></div>}
+      {fb&&<div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"><div className="flex flex-col items-center gap-3 max-w-md mx-4" style={{animation:'pop 0.3s ease'}}><div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl font-bold" style={{background:fb.type==='correct'?'#6bff8e':'#ff6b6b',color:fb.type==='correct'?'#1a1a2e':'white',boxShadow:`0 0 40px ${fb.type==='correct'?'rgba(107,255,142,0.6)':'rgba(255,107,107,0.6)'}`}}>{fb.type==='correct'?'✓':'✗'}</div><span className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'正解!':'不正解...'}</span>{fb.type==='correct'?<span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>+{fb.points}pt</span>:<div className="flex flex-col items-center gap-2 mt-2" style={{animation:'slideUp 0.3s ease 0.2s both'}}><span className="text-sm text-gray-400">正解は</span><span className="text-2xl px-6 py-3 rounded-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e',background:'rgba(107,255,142,0.15)',border:'2px solid #6bff8e',boxShadow:'0 0 20px rgba(107,255,142,0.3)'}}>{fb.correctAnswer}</span></div>}{fb.completeSentence&&<div className="flex flex-col items-center gap-1 mt-2 px-5 py-3 rounded-xl" style={{background:'rgba(37,37,66,0.95)',border:'1px solid rgba(255,255,255,0.1)',animation:'slideUp 0.3s ease 0.3s both'}}><span className="text-base text-white font-bold" style={{fontFamily:"'Inter',sans-serif"}}>{fb.completeSentence}</span>{fb.hint&&<span className="text-sm" style={{color:'#a0aec0',fontFamily:"'Noto Sans JP',sans-serif"}}>💬 {fb.hint}</span>}</div>}</div></div>}
     </div>
   );
 };
