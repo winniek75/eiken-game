@@ -1348,14 +1348,10 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
   };
 
   // 写真アイテム（Card2用） - 読み込み失敗時はemojiフォールバック
-  const [imgErrors, setImgErrors] = useState({});
-  const handleImgError = (word) => setImgErrors(prev => ({...prev, [word]: true}));
-
   const renderPhotoItem = (item, idx) => {
     const sz = cardSizes[5 + idx] || { scale: 1, rotate: 0 };
     const isMatch = fb && item.word === roundData.matchWord;
     const isWrong = fb?.type === 'wrong' && item.word === fb.word;
-    const hasFailed = imgErrors[item.word];
     return (
       <button
         key={item.word + 'p'}
@@ -1373,13 +1369,8 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
           border: isMatch ? '3px solid #6bff8e' : isWrong ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.15)',
           boxShadow: isMatch ? '0 0 20px rgba(107,255,142,0.5)' : isWrong ? '0 0 20px rgba(255,107,107,0.5)' : '0 4px 12px rgba(0,0,0,0.4)',
           animation: isMatch ? 'pop 0.3s ease' : undefined,
-          background: hasFailed ? 'linear-gradient(135deg,#252542,#1a1a2e)' : 'transparent',
         }}>
-          {hasFailed ? (
-            <span className="text-3xl">{item.emoji || '❓'}</span>
-          ) : (
-            <img src={item.img} alt={item.meaning} className="w-full h-full object-cover" loading="eager" onError={() => handleImgError(item.word)}/>
-          )}
+          <img src={item.img} alt={item.meaning} className="w-full h-full object-cover" loading="eager" onError={(e) => { e.target.style.display='none'; e.target.parentElement.textContent=item.emoji||'❓'; e.target.parentElement.style.fontSize='2rem'; e.target.parentElement.style.display='flex'; e.target.parentElement.style.alignItems='center'; e.target.parentElement.style.justifyContent='center'; e.target.parentElement.style.background='linear-gradient(135deg,#252542,#1a1a2e)'; }}/>
         </div>
       </button>
     );
