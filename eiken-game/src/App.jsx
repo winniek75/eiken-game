@@ -812,6 +812,195 @@ const ConfettiExplosion = ({show}) => {
   );
 };
 
+// ======== ブーストラン（コンボ3で発動するミニゲーム）========
+const BoostRun = ({combo, color, onComplete}) => {
+  const [playerY, setPlayerY] = useState(0); // 0=地上, 1=ジャンプ中
+  const [obstacles, setObstacles] = useState([]);
+  const [runTime, setRunTime] = useState(0);
+  const [dodged, setDodged] = useState(0);
+  const [hit, setHit] = useState(false);
+  const [done, setDone] = useState(false);
+  const frameRef = useRef(null);
+  const startRef = useRef(Date.now());
+  const jumpRef = useRef(false);
+  const obstaclesRef = useRef([]);
+  const hitRef = useRef(false);
+  const dodgedRef = useRef(0);
+  const DURATION = 4500;
+  const monsters = ['👾','👻','🦇','💀','🐉','👹','🧟','🎃'];
+
+  // 障害物を生成（ランダム間隔で3-4体）
+  useEffect(() => {
+    const count = 3 + Math.floor(Math.random() * 2);
+    const spacing = DURATION / (count + 1);
+    const obs = Array.from({length: count}, (_, i) => ({
+      id: i,
+      spawnAt: spacing * (i + 1) - 200 + Math.random() * 400,
+      x: 110,
+      emoji: monsters[Math.floor(Math.random() * monsters.length)],
+      passed: false,
+      size: 0.8 + Math.random() * 0.6,
+    }));
+    obstaclesRef.current = obs;
+    setObstacles(obs);
+  }, []);
+
+  // ゲームループ
+  useEffect(() => {
+    const loop = () => {
+      const elapsed = Date.now() - startRef.current;
+      setRunTime(elapsed);
+
+      if (elapsed >= DURATION && !hitRef.current) {
+        setDone(true);
+        setTimeout(() => onComplete({ dodged: dodgedRef.current, hit: false, bonus: dodgedRef.current * 150 }), 1000);
+        return;
+      }
+      if (hitRef.current) return;
+
+      // 障害物移動
+      const updated = obstaclesRef.current.map(ob => {
+        if (elapsed < ob.spawnAt) return ob;
+        const progress = (elapsed - ob.spawnAt) / 1200;
+        const newX = 110 - progress * 130;
+
+        // 衝突判定（プレイヤーx=15%, 幅10%）
+        if (newX > 5 && newX < 25 && !ob.passed && !jumpRef.current) {
+          hitRef.current = true;
+          setHit(true);
+          playErrorSound();
+          setTimeout(() => onComplete({ dodged: dodgedRef.current, hit: true, bonus: 0 }), 1500);
+          return { ...ob, x: newX };
+        }
+
+        // 通過判定
+        if (newX < 5 && !ob.passed) {
+          dodgedRef.current += 1;
+          setDodged(d => d + 1);
+          return { ...ob, x: newX, passed: true };
+        }
+
+        return { ...ob, x: newX };
+      });
+      obstaclesRef.current = updated;
+      setObstacles([...updated]);
+      frameRef.current = requestAnimationFrame(loop);
+    };
+    frameRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  // ジャンプ処理
+  const handleJump = useCallback(() => {
+    if (jumpRef.current || hitRef.current || done) return;
+    jumpRef.current = true;
+    setPlayerY(1);
+    playCorrectChime();
+    setTimeout(() => {
+      jumpRef.current = false;
+      setPlayerY(0);
+    }, 600);
+  }, [done]);
+
+  // キーボード
+  useEffect(() => {
+    const handleKey = (e) => { if (e.code === 'Space' || e.key === 'ArrowUp') { e.preventDefault(); handleJump(); } };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [handleJump]);
+
+  const progress = Math.min(100, (runTime / DURATION) * 100);
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex flex-col items-center justify-center"
+      style={{background:'linear-gradient(180deg,#0a0a2e 0%,#1a1a3e 60%,#252542 100%)'}}
+      onClick={handleJump}
+      onTouchStart={(e) => { e.preventDefault(); handleJump(); }}
+    >
+      {/* ヘッダー */}
+      <div className="absolute top-4 left-0 right-0 flex justify-center gap-6 z-10">
+        <div className="px-4 py-2 rounded-full text-sm font-bold" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',fontFamily:"'Dela Gothic One',sans-serif",color:'white'}}>
+          BOOST RUN! ×{combo}
+        </div>
+        <div className="px-4 py-2 rounded-full text-sm font-bold" style={{background:'rgba(107,255,142,0.2)',color:'#6bff8e'}}>
+          避けた: {dodged}
+        </div>
+      </div>
+
+      {/* プログレス */}
+      <div className="absolute top-16 left-4 right-4">
+        <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{width:`${progress}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/>
+        </div>
+      </div>
+
+      {/* ゲームエリア */}
+      <div className="relative w-full" style={{height:'200px',maxWidth:'500px'}}>
+        {/* 地面 */}
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{background:'linear-gradient(90deg,#c44eff40,#00d9ff40)'}}/>
+
+        {/* 背景星 */}
+        {Array.from({length:15}).map((_,i)=>(
+          <div key={i} className="absolute rounded-full" style={{
+            width: 2 + Math.random()*3, height: 2 + Math.random()*3,
+            background:'#fff', opacity: 0.3 + Math.random()*0.5,
+            top: `${Math.random()*60}%`, left: `${(i*7 + runTime*0.02) % 110 - 5}%`,
+          }}/>
+        ))}
+
+        {/* プレイヤー */}
+        <div className="absolute transition-all duration-200 ease-out" style={{
+          left: '15%',
+          bottom: playerY ? '110px' : '8px',
+          fontSize: '3rem',
+          filter: hit ? 'brightness(0.3)' : 'none',
+          animation: hit ? 'shake 0.3s ease' : undefined,
+        }}>
+          {hit ? '💥' : '🏃'}
+        </div>
+
+        {/* 障害物 */}
+        {obstacles.map(ob => {
+          if (runTime < ob.spawnAt || ob.x < -10) return null;
+          return (
+            <div key={ob.id} className="absolute" style={{
+              left: `${ob.x}%`,
+              bottom: '8px',
+              fontSize: `${2.5 * ob.size}rem`,
+              transition: 'none',
+              opacity: ob.x < 0 ? 0 : 1,
+            }}>
+              {ob.emoji}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 指示 */}
+      {!hit && !done && (
+        <div className="mt-8 text-center" style={{animation:'pulse 1s infinite'}}>
+          <span className="text-lg font-bold text-white/60" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>タップでジャンプ！</span>
+        </div>
+      )}
+
+      {/* 結果 */}
+      {done && !hit && (
+        <div className="mt-6 flex flex-col items-center gap-2" style={{animation:'pop 0.5s ease'}}>
+          <span className="text-5xl">🎉</span>
+          <span className="text-2xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e'}}>CLEAR! +{dodged * 150}pt</span>
+        </div>
+      )}
+      {hit && (
+        <div className="mt-6 flex flex-col items-center gap-2" style={{animation:'pop 0.5s ease'}}>
+          <span className="text-5xl">💥</span>
+          <span className="text-2xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ff6b6b'}}>HIT! コンボ途切れた…</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='normal'})=>{
   const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(15);const[cc,setCc]=useState(0);const[showHint,setShowHint]=useState(false);const[fb,setFb]=useState(null);const[me,setMe]=useState('thinking');const[mm,setMm]=useState('がんばれ〜！');const[showExit,setShowExit]=useState(false);const tRef=useRef(null);const handleAnswerRef=useRef(null);
   const[recentResults,setRecentResults]=useState([]); // adaptive difficulty tracking
@@ -819,6 +1008,8 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
   const[showConfetti,setShowConfetti]=useState(false);
   const[lives,setLives]=useState(gameMode==='survival'?3:null); // survival mode
   const[totalTime,setTotalTime]=useState(gameMode==='timeattack'?60:null); // time attack
+  const[boostActive,setBoostActive]=useState(false); // boost run mini-game
+  const[lastBoostCombo,setLastBoostCombo]=useState(0); // 前回ブースト発動時のcombo
   const totalTimeRef=useRef(totalTime);
   const color=gradeColors[grade];
 
@@ -851,7 +1042,9 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       setFb({type:'correct',points:pts});
       // Combo milestone check
       const newCombo = combo + 1;
-      if ([3,5,7,10].includes(newCombo)) {
+      // コンボ3の倍数でブーストラン発動（初回3, 次6, 9...）
+      const shouldBoost = newCombo >= 3 && newCombo % 3 === 0 && newCombo !== lastBoostCombo;
+      if ([3,5,7,10].includes(newCombo) && !shouldBoost) {
         setComboMilestone(true);
         setShowConfetti(true);
         playLevelUpSound();
@@ -878,13 +1071,39 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       if (gameMode === 'survival' && !ok && lives <= 1) { endGame(false); return; }
       // Normal/TimeAttack: check if questions exhausted
       if(ci+1>=questions.length){ endGame(ok); }
+      // ブーストラン発動チェック
+      else if (ok && shouldBoost) {
+        clearInterval(tRef.current);
+        setLastBoostCombo(combo + 1);
+        setBoostActive(true);
+      }
       else { setCi(p=>p+1); setTimeLeft(getAdaptiveTime()); }
     },ok?1200:2500);
-  },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd,lives,gameMode,recentResults]);
+  },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd,lives,gameMode,recentResults,lastBoostCombo]);
   handleAnswerRef.current=handleAnswer;
 
+  // ブーストラン完了ハンドラー
+  const handleBoostComplete = useCallback((result) => {
+    setBoostActive(false);
+    if (result.hit) {
+      setCombo(0);
+      setMe('sad');
+      setMm('ドンマイ！');
+    } else {
+      setScore(p => p + result.bonus);
+      setMe('excited');
+      setMm('ナイスラン！');
+      setComboMilestone(true);
+      setShowConfetti(true);
+      playLevelUpSound();
+      setTimeout(() => { setComboMilestone(false); setShowConfetti(false); }, 1500);
+    }
+    setCi(p => p + 1);
+    setTimeLeft(getAdaptiveTime());
+  }, []);
+
   // Question timer
-  useEffect(()=>{if(!questions.length)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
+  useEffect(()=>{if(!questions.length||boostActive)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
 
   // Time attack global timer
   useEffect(()=>{
@@ -906,6 +1125,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
   const cq=questions[ci];const prog=((ci+1)/questions.length)*100;const tc=timeLeft<=5?'#ff6b6b':timeLeft<=10?'#ffd93d':'#6bff8e';
   return(
     <div className="min-h-screen p-4" style={{background:`radial-gradient(circle at 30% 70%,${color}15 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)`}}>
+      {boostActive && <BoostRun combo={combo} color={color} onComplete={handleBoostComplete}/>}
       <ComboEffect combo={combo}/>
       <ComboMilestone combo={combo} show={comboMilestone}/>
       <ConfettiExplosion show={showConfetti}/>
