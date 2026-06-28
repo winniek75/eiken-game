@@ -1035,15 +1035,14 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
   const handleAnswer=useCallback((si)=>{
     if(fb!==null)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
     setRecentResults(prev => [...prev, ok]);
+    const newCombo = ok ? combo + 1 : 0;
+    const shouldBoost = ok && newCombo >= 3 && newCombo % 3 === 0 && newCombo !== lastBoostCombo;
 
     if(ok){
       const pts=100+Math.floor(timeLeft*10)+combo*50;
       setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);
       setFb({type:'correct',points:pts});
       // Combo milestone check
-      const newCombo = combo + 1;
-      // コンボ3の倍数でブーストラン発動（初回3, 次6, 9...）
-      const shouldBoost = newCombo >= 3 && newCombo % 3 === 0 && newCombo !== lastBoostCombo;
       if ([3,5,7,10].includes(newCombo) && !shouldBoost) {
         setComboMilestone(true);
         setShowConfetti(true);
