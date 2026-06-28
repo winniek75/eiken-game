@@ -1784,7 +1784,8 @@ export default function App(){
   };
 
   const [gameMode, setGameMode] = useState('normal');
-  const handleStartGame = (g, mode='normal') => { setSg(g); setGameMode(mode); setGs(GAME_STATES.PLAYING); setWrongThisGame([]); };
+  const [gameKey, setGameKey] = useState(0); // 再マウント用キー
+  const handleStartGame = (g, mode='normal') => { setSg(g); setGameMode(mode); setGs(GAME_STATES.PLAYING); setWrongThisGame([]); setGameKey(k => k + 1); };
 
   const handleGameEnd = (r) => {
     setGr(r);
@@ -1891,8 +1892,8 @@ export default function App(){
       )}
 
       {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onSortingSection={()=>setGs('SORTING_MENU')} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} />}
-      {gs===GAME_STATES.PLAYING&&<GameScreen grade={sg} gameMode={gameMode} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
-      {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} onRetry={()=>{setWrongThisGame([]);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
+      {gs===GAME_STATES.PLAYING&&<GameScreen key={gameKey} grade={sg} gameMode={gameMode} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
+      {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} onRetry={()=>{setWrongThisGame([]);setGameKey(k=>k+1);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
       {gs===GAME_STATES.IDIOM_MENU&&<IdiomMenu onStartLearn={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_LEARN);}} onStartTest={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_TEST);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
       {gs===GAME_STATES.IDIOM_LEARN&&<IdiomLearnMode grade={sg} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)} onFinish={(r)=>handleIdiomEnd(r)}/>}
       {gs===GAME_STATES.IDIOM_TEST&&<IdiomTestMode grade={sg} onGameEnd={handleIdiomEnd} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)}/>}
