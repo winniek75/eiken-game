@@ -430,7 +430,57 @@ const getIdiomByGrade=(g)=>({5:idiom5Data,4:idiom4Data,3:idiom3Data}[g]||idiom5D
 const shuffleArray=(a)=>{const s=[...a];for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]];}return s;};
 const shuffleOptions=(q)=>{const o=q.options.map((t,i)=>({text:t,isCorrect:i===q.answer}));const s=shuffleArray(o);return{...q,options:s.map(x=>x.text),answer:s.findIndex(x=>x.isCorrect)};};
 const getRandomQuestions=(g,c=10)=>shuffleArray(getQuestionsByGrade(g)).slice(0,c).map(q=>shuffleOptions(q));
-const GAME_STATES={MENU:'menu',PLAYING:'playing',RESULT:'result',IDIOM_MENU:'idiom_menu',IDIOM_LEARN:'idiom_learn',IDIOM_TEST:'idiom_test',IDIOM_RESULT:'idiom_result'};
+const GAME_STATES={MENU:'menu',PLAYING:'playing',RESULT:'result',IDIOM_MENU:'idiom_menu',IDIOM_LEARN:'idiom_learn',IDIOM_TEST:'idiom_test',IDIOM_RESULT:'idiom_result',SORTING:'sorting',SORTING_RESULT:'sorting_result'};
+
+// ======== 仕分けゲームデータ ========
+const sortingCategories = {
+  5: [
+    { left: { name: '動物', emoji: '🐾' }, right: { name: '食べ物', emoji: '🍎' }, words: [
+      { word: 'dog', meaning: '犬', category: 'left' },{ word: 'cat', meaning: '猫', category: 'left' },{ word: 'bird', meaning: '鳥', category: 'left' },{ word: 'fish', meaning: '魚', category: 'left' },{ word: 'rabbit', meaning: 'うさぎ', category: 'left' },{ word: 'bear', meaning: 'くま', category: 'left' },{ word: 'lion', meaning: 'ライオン', category: 'left' },{ word: 'elephant', meaning: 'ぞう', category: 'left' },
+      { word: 'apple', meaning: 'りんご', category: 'right' },{ word: 'bread', meaning: 'パン', category: 'right' },{ word: 'rice', meaning: 'ご飯', category: 'right' },{ word: 'orange', meaning: 'オレンジ', category: 'right' },{ word: 'banana', meaning: 'バナナ', category: 'right' },{ word: 'grape', meaning: 'ぶどう', category: 'right' },{ word: 'cake', meaning: 'ケーキ', category: 'right' },{ word: 'egg', meaning: '卵', category: 'right' },
+    ]},
+    { left: { name: '学校', emoji: '🏫' }, right: { name: '体', emoji: '🧑' }, words: [
+      { word: 'pen', meaning: 'ペン', category: 'left' },{ word: 'book', meaning: '本', category: 'left' },{ word: 'desk', meaning: '机', category: 'left' },{ word: 'chair', meaning: 'いす', category: 'left' },{ word: 'eraser', meaning: '消しゴム', category: 'left' },{ word: 'pencil', meaning: 'えんぴつ', category: 'left' },{ word: 'ruler', meaning: '定規', category: 'left' },{ word: 'bag', meaning: 'かばん', category: 'left' },
+      { word: 'hand', meaning: '手', category: 'right' },{ word: 'eye', meaning: '目', category: 'right' },{ word: 'ear', meaning: '耳', category: 'right' },{ word: 'nose', meaning: '鼻', category: 'right' },{ word: 'mouth', meaning: '口', category: 'right' },{ word: 'head', meaning: '頭', category: 'right' },{ word: 'foot', meaning: '足', category: 'right' },{ word: 'arm', meaning: '腕', category: 'right' },
+    ]},
+    { left: { name: '色', emoji: '🎨' }, right: { name: '数字', emoji: '🔢' }, words: [
+      { word: 'red', meaning: '赤', category: 'left' },{ word: 'blue', meaning: '青', category: 'left' },{ word: 'green', meaning: '緑', category: 'left' },{ word: 'yellow', meaning: '黄色', category: 'left' },{ word: 'white', meaning: '白', category: 'left' },{ word: 'black', meaning: '黒', category: 'left' },{ word: 'pink', meaning: 'ピンク', category: 'left' },{ word: 'purple', meaning: '紫', category: 'left' },
+      { word: 'one', meaning: '1', category: 'right' },{ word: 'two', meaning: '2', category: 'right' },{ word: 'three', meaning: '3', category: 'right' },{ word: 'five', meaning: '5', category: 'right' },{ word: 'ten', meaning: '10', category: 'right' },{ word: 'seven', meaning: '7', category: 'right' },{ word: 'eight', meaning: '8', category: 'right' },{ word: 'twelve', meaning: '12', category: 'right' },
+    ]},
+  ],
+  4: [
+    { left: { name: '名詞', emoji: '📦' }, right: { name: '動詞', emoji: '🏃' }, words: [
+      { word: 'experience', meaning: '経験', category: 'left' },{ word: 'success', meaning: '成功', category: 'left' },{ word: 'reason', meaning: '理由', category: 'left' },{ word: 'opinion', meaning: '意見', category: 'left' },{ word: 'culture', meaning: '文化', category: 'left' },{ word: 'memory', meaning: '記憶', category: 'left' },{ word: 'ability', meaning: '能力', category: 'left' },{ word: 'habit', meaning: '習慣', category: 'left' },
+      { word: 'decide', meaning: '決める', category: 'right' },{ word: 'believe', meaning: '信じる', category: 'right' },{ word: 'imagine', meaning: '想像する', category: 'right' },{ word: 'improve', meaning: '改善する', category: 'right' },{ word: 'prepare', meaning: '準備する', category: 'right' },{ word: 'discover', meaning: '発見する', category: 'right' },{ word: 'explain', meaning: '説明する', category: 'right' },{ word: 'suggest', meaning: '提案する', category: 'right' },
+    ]},
+    { left: { name: '形容詞', emoji: '✨' }, right: { name: '副詞', emoji: '💨' }, words: [
+      { word: 'expensive', meaning: '高価な', category: 'left' },{ word: 'cheap', meaning: '安い', category: 'left' },{ word: 'famous', meaning: '有名な', category: 'left' },{ word: 'popular', meaning: '人気の', category: 'left' },{ word: 'necessary', meaning: '必要な', category: 'left' },{ word: 'possible', meaning: '可能な', category: 'left' },{ word: 'dangerous', meaning: '危険な', category: 'left' },{ word: 'comfortable', meaning: '快適な', category: 'left' },
+      { word: 'usually', meaning: '普通は', category: 'right' },{ word: 'probably', meaning: 'たぶん', category: 'right' },{ word: 'especially', meaning: '特に', category: 'right' },{ word: 'actually', meaning: '実際に', category: 'right' },{ word: 'recently', meaning: '最近', category: 'right' },{ word: 'suddenly', meaning: '突然に', category: 'right' },{ word: 'carefully', meaning: '注意深く', category: 'right' },{ word: 'certainly', meaning: '確かに', category: 'right' },
+    ]},
+    { left: { name: '感情 😊', emoji: '😊' }, right: { name: '場所 🏠', emoji: '🏠' }, words: [
+      { word: 'happy', meaning: '幸せな', category: 'left' },{ word: 'angry', meaning: '怒った', category: 'left' },{ word: 'excited', meaning: '興奮した', category: 'left' },{ word: 'nervous', meaning: '緊張した', category: 'left' },{ word: 'surprised', meaning: '驚いた', category: 'left' },{ word: 'worried', meaning: '心配な', category: 'left' },{ word: 'lonely', meaning: '寂しい', category: 'left' },{ word: 'proud', meaning: '誇りに思う', category: 'left' },
+      { word: 'hospital', meaning: '病院', category: 'right' },{ word: 'museum', meaning: '博物館', category: 'right' },{ word: 'library', meaning: '図書館', category: 'right' },{ word: 'airport', meaning: '空港', category: 'right' },{ word: 'factory', meaning: '工場', category: 'right' },{ word: 'stadium', meaning: 'スタジアム', category: 'right' },{ word: 'restaurant', meaning: 'レストラン', category: 'right' },{ word: 'theater', meaning: '劇場', category: 'right' },
+    ]},
+  ],
+  3: [
+    { left: { name: '名詞', emoji: '📦' }, right: { name: '動詞', emoji: '🏃' }, words: [
+      { word: 'opportunity', meaning: '機会', category: 'left' },{ word: 'responsibility', meaning: '責任', category: 'left' },{ word: 'achievement', meaning: '達成', category: 'left' },{ word: 'knowledge', meaning: '知識', category: 'left' },{ word: 'advantage', meaning: '利点', category: 'left' },{ word: 'development', meaning: '発展', category: 'left' },{ word: 'relationship', meaning: '関係', category: 'left' },{ word: 'possibility', meaning: '可能性', category: 'left' },
+      { word: 'concentrate', meaning: '集中する', category: 'right' },{ word: 'investigate', meaning: '調査する', category: 'right' },{ word: 'appreciate', meaning: '感謝する', category: 'right' },{ word: 'encourage', meaning: '励ます', category: 'right' },{ word: 'establish', meaning: '設立する', category: 'right' },{ word: 'determine', meaning: '決定する', category: 'right' },{ word: 'recognize', meaning: '認識する', category: 'right' },{ word: 'represent', meaning: '代表する', category: 'right' },
+    ]},
+    { left: { name: '形容詞', emoji: '✨' }, right: { name: '副詞', emoji: '💨' }, words: [
+      { word: 'significant', meaning: '重要な', category: 'left' },{ word: 'appropriate', meaning: '適切な', category: 'left' },{ word: 'available', meaning: '利用可能な', category: 'left' },{ word: 'essential', meaning: '必須の', category: 'left' },{ word: 'enormous', meaning: '巨大な', category: 'left' },{ word: 'obvious', meaning: '明らかな', category: 'left' },{ word: 'valuable', meaning: '価値のある', category: 'left' },{ word: 'reasonable', meaning: '合理的な', category: 'left' },
+      { word: 'eventually', meaning: '結局', category: 'right' },{ word: 'frequently', meaning: '頻繁に', category: 'right' },{ word: 'unfortunately', meaning: '残念ながら', category: 'right' },{ word: 'approximately', meaning: 'およそ', category: 'right' },{ word: 'immediately', meaning: 'すぐに', category: 'right' },{ word: 'properly', meaning: '適切に', category: 'right' },{ word: 'completely', meaning: '完全に', category: 'right' },{ word: 'definitely', meaning: '確実に', category: 'right' },
+    ]},
+    { left: { name: 'ポジティブ 👍', emoji: '👍' }, right: { name: 'ネガティブ 👎', emoji: '👎' }, words: [
+      { word: 'appreciate', meaning: '感謝する', category: 'left' },{ word: 'encourage', meaning: '励ます', category: 'left' },{ word: 'contribute', meaning: '貢献する', category: 'left' },{ word: 'achieve', meaning: '達成する', category: 'left' },{ word: 'improve', meaning: '改善する', category: 'left' },{ word: 'satisfy', meaning: '満足させる', category: 'left' },{ word: 'support', meaning: '支援する', category: 'left' },{ word: 'succeed', meaning: '成功する', category: 'left' },
+      { word: 'suffer', meaning: '苦しむ', category: 'right' },{ word: 'complain', meaning: '文句を言う', category: 'right' },{ word: 'refuse', meaning: '拒否する', category: 'right' },{ word: 'destroy', meaning: '破壊する', category: 'right' },{ word: 'ignore', meaning: '無視する', category: 'right' },{ word: 'disappoint', meaning: '失望させる', category: 'right' },{ word: 'criticize', meaning: '批判する', category: 'right' },{ word: 'struggle', meaning: '苦闘する', category: 'right' },
+    ]},
+  ],
+};
+const getSortingSet = (grade) => {
+  const sets = sortingCategories[grade] || sortingCategories[5];
+  return sets[Math.floor(Math.random() * sets.length)];
+};
 const gradeColors={5:'#00d9ff',4:'#ffd93d',3:'#ff6b9d'};
 const optLabels=['A','B','C','D'];
 
@@ -530,7 +580,7 @@ const ComboEffect=({combo})=>{if(combo<2)return null;return(<div className="fixe
 const ConfirmDialog=({isOpen,onConfirm,onCancel})=>{if(!isOpen)return null;return(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"><div className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full mx-4 text-center" style={{animation:'pop 0.3s ease'}}><div className="text-4xl mb-4">🤔</div><h3 className="text-xl font-bold text-white mb-2">ゲームを終了しますか？</h3><p className="text-gray-400 mb-6">現在の進行状況は保存されません</p><div className="flex gap-3"><button className="flex-1 py-3 rounded-xl font-bold text-white bg-gray-600 hover:bg-gray-500 transition-all" onClick={onCancel}>続ける</button><button className="flex-1 py-3 rounded-xl font-bold text-white transition-all" style={{background:'linear-gradient(135deg,#ff6b6b,#ff8e53)'}} onClick={onConfirm}>終了する</button></div></div></div>);};
 
 // ======== メインメニュー ========
-const MainMenu=({onStartGame,onIdiomSection,onReviewSection,highScores,saveData,daily})=>{
+const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,highScores,saveData,daily})=>{
   const[selectedGrade,setSelectedGrade]=useState(null);
   const grades=[{level:5,name:'5級',desc:'小学校高学年〜中1',color:'#00d9ff',emoji:'🌟',q:grade5Questions.length},{level:4,name:'4級',desc:'中学2年レベル',color:'#ffd93d',emoji:'⭐',q:grade4Questions.length},{level:3,name:'3級',desc:'中学卒業レベル',color:'#ff6b9d',emoji:'💫',q:grade3Questions.length}];
   const level = saveData?.level || 1;
@@ -628,6 +678,9 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,highScores,saveData,
       <div className="flex flex-wrap gap-3 justify-center">
         <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 10px 40px rgba(255,142,83,0.3)'}} onClick={onIdiomSection}>
           <span className="text-2xl">📚</span><span className="text-lg text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>熟語マスター</span>
+        </button>
+        <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#00f5d4,#00d9ff)',boxShadow:'0 10px 40px rgba(0,245,212,0.3)'}} onClick={onSortingSection}>
+          <span className="text-2xl">🗂️</span><span className="text-lg text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>仕分けゲーム</span>
         </button>
         {wrongCount > 0 && (
           <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff8e53)',boxShadow:'0 10px 40px rgba(255,107,107,0.3)'}} onClick={onReviewSection}>
@@ -1083,6 +1136,246 @@ const IdiomTestMode=({grade,onGameEnd,onExit})=>{
   );
 };
 
+// ======== 仕分けメニュー ========
+const SortingMenu = ({onStart, onBack}) => {
+  const grades=[{level:5,name:'5級',desc:'動物 vs 食べ物 など',color:'#00d9ff',emoji:'🌟'},{level:4,name:'4級',desc:'名詞 vs 動詞 など',color:'#ffd93d',emoji:'⭐'},{level:3,name:'3級',desc:'形容詞 vs 副詞 など',color:'#ff6b9d',emoji:'💫'}];
+  return (
+    <div className="min-h-screen p-6 flex flex-col items-center justify-center gap-8" style={{background:'radial-gradient(circle at 50% 20%,rgba(0,245,212,0.15) 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
+      <button className="absolute top-6 left-6 p-3 rounded-xl text-white hover:bg-white/10 transition-all text-2xl" onClick={onBack}>←</button>
+      <div className="text-center">
+        <span className="text-6xl mb-4 block">🗂️</span>
+        <h1 className="text-4xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(135deg,#00f5d4,#00d9ff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>仕分けゲーム</h1>
+        <p className="text-gray-400 mt-2">単語を正しいカテゴリーに振り分けよう！</p>
+        <p className="text-gray-500 text-sm mt-1">スワイプ or タップで仕分け</p>
+      </div>
+      <div className="flex flex-col gap-4 w-full max-w-md">
+        {grades.map((g,i) => (
+          <button key={g.level} className="flex items-center gap-4 p-5 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#252542 0%,#1a1a2e 100%)',border:`2px solid ${g.color}40`,boxShadow:`0 4px 20px ${g.color}20`,animation:'slideUp 0.5s ease forwards',animationDelay:`${i*0.1}s`}} onClick={()=>onStart(g.level)}>
+            <span className="text-4xl">{g.emoji}</span>
+            <div className="flex-1 text-left">
+              <div className="text-xl font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif",color:g.color}}>{g.name}</div>
+              <div className="text-sm text-gray-400">{g.desc}</div>
+            </div>
+            <span className="text-2xl text-gray-500">→</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ======== 仕分けゲーム画面 ========
+const SortingGame = ({grade, onGameEnd, onExit}) => {
+  const [sortingSet, setSortingSet] = useState(null);
+  const [words, setWords] = useState([]);
+  const [ci, setCi] = useState(0);
+  const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
+  const [cc, setCc] = useState(0);
+  const [fb, setFb] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(45);
+  const [showExit, setShowExit] = useState(false);
+  const [slideDir, setSlideDir] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [dragX, setDragX] = useState(0);
+  const tRef = useRef(null);
+  const color = gradeColors[grade];
+
+  useEffect(() => {
+    const set = getSortingSet(grade);
+    setSortingSet(set);
+    setWords(shuffleArray([...set.words]));
+  }, [grade]);
+
+  // Timer
+  useEffect(() => {
+    if (!words.length) return;
+    tRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(tRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tRef.current);
+  }, [words.length]);
+
+  // Time up check
+  useEffect(() => {
+    if (timeLeft === 0 && words.length > 0) {
+      onGameEnd({ score, correctCount: cc, maxCombo, totalQuestions: ci, mode: 'sorting' });
+    }
+  }, [timeLeft]);
+
+  const handleSort = useCallback((direction) => {
+    if (fb !== null || ci >= words.length) return;
+    const cw = words[ci];
+    const isCorrect = cw.category === direction;
+    setSlideDir(direction);
+
+    if (isCorrect) {
+      const pts = 100 + combo * 30;
+      setScore(p => p + pts);
+      setCombo(p => p + 1);
+      setMaxCombo(p => Math.max(p, combo + 1));
+      setCc(p => p + 1);
+      setFb({ type: 'correct', points: pts });
+      playCorrectChime();
+      setTimeout(() => playSound(cw.word), 200);
+    } else {
+      setCombo(0);
+      setFb({ type: 'wrong', correct: direction === 'left' ? 'right' : 'left' });
+      playErrorSound();
+    }
+
+    setTimeout(() => {
+      setFb(null);
+      setSlideDir(null);
+      setDragX(0);
+      if (ci + 1 >= words.length) {
+        const finalScore = isCorrect ? score + 100 + combo * 30 : score;
+        const finalCC = isCorrect ? cc + 1 : cc;
+        onGameEnd({ score: finalScore, correctCount: finalCC, maxCombo: Math.max(maxCombo, isCorrect ? combo + 1 : maxCombo), totalQuestions: words.length, mode: 'sorting' });
+      } else {
+        setCi(p => p + 1);
+      }
+    }, isCorrect ? 600 : 1200);
+  }, [ci, words, score, combo, maxCombo, cc, fb, onGameEnd]);
+
+  // Touch/swipe handling
+  const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
+  const handleTouchMove = (e) => {
+    if (touchStart === null || fb) return;
+    setDragX(e.touches[0].clientX - touchStart);
+  };
+  const handleTouchEnd = () => {
+    if (Math.abs(dragX) > 60) {
+      handleSort(dragX < 0 ? 'left' : 'right');
+    } else {
+      setDragX(0);
+    }
+    setTouchStart(null);
+  };
+
+  // Keyboard support
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'ArrowLeft') handleSort('left');
+      if (e.key === 'ArrowRight') handleSort('right');
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [handleSort]);
+
+  if (!sortingSet || !words.length) return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
+
+  const cw = words[ci] || words[words.length - 1];
+  const prog = ((ci) / words.length) * 100;
+  const tc = timeLeft <= 10 ? '#ff6b6b' : timeLeft <= 25 ? '#ffd93d' : '#6bff8e';
+  const leftHighlight = dragX < -30 ? 'scale(1.08)' : 'scale(1)';
+  const rightHighlight = dragX > 30 ? 'scale(1.08)' : 'scale(1)';
+
+  return (
+    <div className="min-h-screen p-4 flex flex-col" style={{background:`radial-gradient(circle at 30% 70%,${color}15 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)`}}>
+      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>setShowExit(false)}/>
+
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 rounded-2xl mb-4" style={{background:'rgba(37,37,66,0.8)'}}>
+        <button className="p-2 rounded-xl hover:bg-white/10 transition-all" onClick={()=>{clearInterval(tRef.current);setShowExit(true);}}><span className="text-2xl">←</span></button>
+        <div className="flex items-center gap-4">
+          <div className="px-4 py-2 rounded-full text-base font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div>
+          <div className="flex flex-col items-center"><span className="text-xs text-gray-400">SCORE</span><span className="text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div>
+          {combo >= 2 && <div className="px-3 py-1 rounded-full" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}}><span className="text-sm text-white font-bold">×{combo}</span></div>}
+        </div>
+        <div className="flex flex-col items-center"><span className="text-xs text-gray-400">TIME</span><span className="text-xl font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif",color:tc}}>{timeLeft}s</span></div>
+      </div>
+
+      {/* Progress */}
+      <div className="w-full max-w-md mx-auto mb-2">
+        <div className="text-center text-sm text-gray-400 mb-1">{ci}/{words.length}</div>
+        <div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div>
+      </div>
+
+      {/* Main Game Area */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+
+        {/* Category Labels (Top) */}
+        <div className="flex justify-between w-full px-2">
+          <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl transition-all duration-200" style={{background: dragX < -30 ? 'rgba(107,255,142,0.25)' : 'rgba(37,37,66,0.8)', border: dragX < -30 ? '2px solid #6bff8e' : '2px solid transparent', transform: leftHighlight}}>
+            <span className="text-3xl">{sortingSet.left.emoji}</span>
+            <span className="text-sm font-bold text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{sortingSet.left.name}</span>
+            <span className="text-xs text-gray-400">← スワイプ</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl transition-all duration-200" style={{background: dragX > 30 ? 'rgba(107,255,142,0.25)' : 'rgba(37,37,66,0.8)', border: dragX > 30 ? '2px solid #6bff8e' : '2px solid transparent', transform: rightHighlight}}>
+            <span className="text-3xl">{sortingSet.right.emoji}</span>
+            <span className="text-sm font-bold text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{sortingSet.right.name}</span>
+            <span className="text-xs text-gray-400">スワイプ →</span>
+          </div>
+        </div>
+
+        {/* Word Card */}
+        <div
+          className="relative w-full"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div
+            className="rounded-3xl p-8 text-center transition-all select-none"
+            style={{
+              background: fb?.type === 'correct' ? 'rgba(107,255,142,0.2)' : fb?.type === 'wrong' ? 'rgba(255,107,107,0.2)' : 'rgba(37,37,66,0.9)',
+              border: fb?.type === 'correct' ? '3px solid #6bff8e' : fb?.type === 'wrong' ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.1)',
+              transform: slideDir === 'left' ? 'translateX(-120%) rotate(-15deg)' : slideDir === 'right' ? 'translateX(120%) rotate(15deg)' : `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`,
+              transition: slideDir ? 'transform 0.4s ease' : dragX ? 'none' : 'transform 0.3s ease, background 0.3s, border 0.3s',
+              opacity: slideDir ? 0.5 : 1,
+              boxShadow: fb?.type === 'correct' ? '0 0 40px rgba(107,255,142,0.4)' : fb?.type === 'wrong' ? '0 0 40px rgba(255,107,107,0.4)' : '0 10px 40px rgba(0,0,0,0.3)',
+            }}
+          >
+            <div className="text-4xl md:text-5xl font-black text-white mb-3" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{cw.word}</div>
+            <div className="text-lg text-gray-400">{cw.meaning}</div>
+          </div>
+
+          {/* Direction indicators during drag */}
+          {dragX < -30 && !fb && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-4xl" style={{animation:'pulse 0.5s infinite'}}>⬅️</div>}
+          {dragX > 30 && !fb && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-4xl" style={{animation:'pulse 0.5s infinite'}}>➡️</div>}
+        </div>
+
+        {/* Feedback overlay */}
+        {fb && (
+          <div className="text-center" style={{animation:'pop 0.3s ease'}}>
+            {fb.type === 'correct' ? (
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-4xl">⭕</span>
+                <span className="text-xl font-bold" style={{color:'#6bff8e',fontFamily:"'Dela Gothic One',sans-serif"}}>+{fb.points}pt</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-4xl">❌</span>
+                <span className="text-sm text-gray-400">正しくは「{fb.correct === 'left' ? sortingSet.left.name : sortingSet.right.name}」</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tap buttons (for non-swipe users) */}
+        {!fb && (
+          <div className="flex gap-4 w-full">
+            <button className="flex-1 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95" style={{background:'linear-gradient(135deg,#00d9ff,#0099cc)',color:'white',fontFamily:"'Dela Gothic One',sans-serif",boxShadow:'0 6px 20px rgba(0,217,255,0.3)'}} onClick={()=>handleSort('left')}>
+              ← {sortingSet.left.name}
+            </button>
+            <button className="flex-1 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95" style={{background:'linear-gradient(135deg,#ff6b9d,#cc3366)',color:'white',fontFamily:"'Dela Gothic One',sans-serif",boxShadow:'0 6px 20px rgba(255,107,157,0.3)'}} onClick={()=>handleSort('right')}>
+              {sortingSet.right.name} →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ======== 復習モード画面 ========
 const ReviewScreen = ({wrongHistory, onStartReview, onBack}) => {
   if (!wrongHistory.length) return (
@@ -1238,6 +1531,19 @@ export default function App(){
     setGs(GAME_STATES.IDIOM_RESULT);
   };
 
+  const handleSortingEnd = (r) => {
+    setGr(r);
+    const earnedXP = r.score;
+    persist(prev => ({
+      ...prev,
+      totalXP: prev.totalXP + earnedXP,
+      level: calcLevel(prev.totalXP + earnedXP),
+      gamesPlayed: prev.gamesPlayed + 1,
+      streak: updateStreak(prev.streak),
+    }));
+    setGs(GAME_STATES.SORTING_RESULT);
+  };
+
   const handleStartReview = (questions) => {
     setSg(0);
     setGs(GAME_STATES.PLAYING);
@@ -1283,13 +1589,16 @@ export default function App(){
         </div>
       )}
 
-      {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} />}
+      {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onSortingSection={()=>setGs('SORTING_MENU')} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} />}
       {gs===GAME_STATES.PLAYING&&<GameScreen grade={sg} gameMode={gameMode} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
       {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} onRetry={()=>{setWrongThisGame([]);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
       {gs===GAME_STATES.IDIOM_MENU&&<IdiomMenu onStartLearn={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_LEARN);}} onStartTest={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_TEST);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
       {gs===GAME_STATES.IDIOM_LEARN&&<IdiomLearnMode grade={sg} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)} onFinish={(r)=>handleIdiomEnd(r)}/>}
       {gs===GAME_STATES.IDIOM_TEST&&<IdiomTestMode grade={sg} onGameEnd={handleIdiomEnd} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)}/>}
       {gs===GAME_STATES.IDIOM_RESULT&&<ResultScreen result={gr} grade={sg} title="熟語テスト結果" onRetry={()=>setGs(GAME_STATES.IDIOM_TEST)} onMenu={()=>{setGs(GAME_STATES.IDIOM_MENU);setGr(null);}} highScore={ihs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
+      {gs==='SORTING_MENU'&&<SortingMenu onStart={(g)=>{setSg(g);setGs(GAME_STATES.SORTING);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
+      {gs===GAME_STATES.SORTING&&<SortingGame grade={sg} onGameEnd={handleSortingEnd} onExit={()=>setGs(GAME_STATES.MENU)}/>}
+      {gs===GAME_STATES.SORTING_RESULT&&<ResultScreen result={gr} grade={sg} title="仕分け結果" onRetry={()=>setGs(GAME_STATES.SORTING)} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={0} xpEarned={gr?.score||0} saveData={saveData} />}
       {gs==='REVIEW'&&<ReviewScreen wrongHistory={saveData.wrongHistory} onStartReview={handleStartReview} onBack={()=>setGs(GAME_STATES.MENU)} />}
     </>
   );
