@@ -45,8 +45,14 @@ const updateStreak = (streak) => {
 const getDailyChallenge = (saved) => {
   const today = getTodayStr();
   if (saved.dailyChallenge.date === today) return saved.dailyChallenge;
+  // プレイヤーのレベルに応じた級を出す（初心者は5級のみ、慣れてきたら上の級も）
+  const level = saved.level || 1;
+  let pool;
+  if (level >= 10) pool = [5, 4, 3];       // Lv10+: 全級
+  else if (level >= 5) pool = [5, 4];       // Lv5-9: 5級・4級
+  else pool = [5];                          // Lv1-4: 5級のみ
   const seed = today.split('-').join('');
-  const grade = [5, 4, 3][parseInt(seed) % 3];
+  const grade = pool[parseInt(seed) % pool.length];
   return { date: today, completed: false, grade };
 };
 
