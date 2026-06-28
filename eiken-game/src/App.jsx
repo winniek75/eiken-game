@@ -738,7 +738,7 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,hig
         <div className="flex gap-3">
           <button className="flex flex-col items-center px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 6px 20px rgba(255,142,83,0.3)'}} onClick={()=>onStartGame(selectedGrade,'timeattack')}>
             <span className="text-lg text-gray-900 font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>⏱ タイムアタック</span>
-            <span className="text-xs text-gray-700">90秒で何問解ける？</span>
+            <span className="text-xs text-gray-700">60秒で何問解ける？</span>
           </button>
           <button className="flex flex-col items-center px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff3366)',boxShadow:'0 6px 20px rgba(255,51,102,0.3)'}} onClick={()=>onStartGame(selectedGrade,'survival')}>
             <span className="text-lg text-white font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>❤️ サバイバル</span>
@@ -1037,7 +1037,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
   const[comboMilestone,setComboMilestone]=useState(false);
   const[showConfetti,setShowConfetti]=useState(false);
   const[lives,setLives]=useState(gameMode==='survival'?3:null); // survival mode
-  const[totalTime,setTotalTime]=useState(gameMode==='timeattack'?90:null); // time attack: 90秒
+  const[totalTime,setTotalTime]=useState(gameMode==='timeattack'?60:null); // time attack: 60秒
   const[boostActive,setBoostActive]=useState(false); // boost run mini-game
   const[lastBoostCombo,setLastBoostCombo]=useState(0); // 前回ブースト発動時のcombo
   const totalTimeRef=useRef(totalTime);
