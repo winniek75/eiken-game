@@ -1264,8 +1264,8 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
     setRoundTime(0);
     // ランダムサイズ・回転で各アイテムの見た目を変える（ドブルらしさ）
     const sizes = Array.from({length: 10}, () => ({
-      scale: 0.8 + Math.random() * 0.4,
-      rotate: Math.floor(Math.random() * 30) - 15,
+      scale: 0.55 + Math.random() * 0.9,
+      rotate: Math.floor(Math.random() * 50) - 25,
     }));
     setCardSizes(sizes);
   }, [items]);
@@ -1330,13 +1330,14 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
           transform: `scale(${sz.scale}) rotate(${sz.rotate}deg)`,
           opacity: fb && !isMatch ? 0.35 : 1,
           position: 'absolute',
-          ...getCircularPosition(idx, 5, 32),
+          ...getCircularPosition(idx, 5, 34),
         }}
         onClick={() => handleTap(item.word)}
         disabled={!!fb}
       >
-        <span className="px-3 py-1.5 rounded-full font-bold text-sm md:text-base whitespace-nowrap" style={{
+        <span className="px-3 py-1.5 rounded-full font-bold whitespace-nowrap" style={{
           fontFamily:"'Inter',sans-serif",
+          fontSize: `${Math.max(11, Math.min(20, 14 * sz.scale))}px`,
           color: isMatch ? '#1a1a2e' : isWrong ? '#fff' : '#fff',
           background: isMatch ? '#6bff8e' : isWrong ? '#ff6b6b' : 'rgba(255,255,255,0.1)',
           border: isMatch ? '2px solid #6bff8e' : isWrong ? '2px solid #ff6b6b' : '2px solid rgba(255,255,255,0.15)',
@@ -1360,12 +1361,14 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
           transform: `scale(${sz.scale}) rotate(${sz.rotate}deg)`,
           opacity: fb && !isMatch ? 0.35 : 1,
           position: 'absolute',
-          ...getCircularPosition(idx, 5, 32),
+          ...getCircularPosition(idx, 5, 34),
         }}
         onClick={() => handleTap(item.word)}
         disabled={!!fb}
       >
-        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden shadow-lg flex items-center justify-center" style={{
+        <div className="rounded-full overflow-hidden shadow-lg flex items-center justify-center" style={{
+          width: `${Math.max(40, Math.min(72, 52 * sz.scale))}px`,
+          height: `${Math.max(40, Math.min(72, 52 * sz.scale))}px`,
           border: isMatch ? '3px solid #6bff8e' : isWrong ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.15)',
           boxShadow: isMatch ? '0 0 20px rgba(107,255,142,0.5)' : isWrong ? '0 0 20px rgba(255,107,107,0.5)' : '0 4px 12px rgba(0,0,0,0.4)',
           animation: isMatch ? 'pop 0.3s ease' : undefined,
@@ -1408,7 +1411,7 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
       <div className="flex-1 flex flex-col items-center justify-center gap-2 max-w-sm mx-auto w-full">
 
         {/* Card 1: 英単語のみ（丸いカード） */}
-        <div className="relative" style={{width:'min(80vw, 300px)',height:'min(80vw, 300px)'}}>
+        <div className="relative" style={{width:'min(92vw, 380px)',height:'min(92vw, 380px)'}}>
           <div className="absolute inset-0 rounded-full" style={{background:'radial-gradient(circle at 40% 35%,rgba(0,217,255,0.12) 0%,rgba(37,37,66,0.95) 70%)',border:'3px solid rgba(0,217,255,0.25)',boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,217,255,0.05)'}}>
             <div className="absolute top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-cyan-400/60 uppercase tracking-widest">ABC</div>
           </div>
@@ -1423,7 +1426,7 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         </div>
 
         {/* Card 2: 写真のみ（丸いカード） */}
-        <div className="relative" style={{width:'min(80vw, 300px)',height:'min(80vw, 300px)'}}>
+        <div className="relative" style={{width:'min(92vw, 380px)',height:'min(92vw, 380px)'}}>
           <div className="absolute inset-0 rounded-full" style={{background:'radial-gradient(circle at 60% 65%,rgba(255,107,157,0.12) 0%,rgba(37,37,66,0.95) 70%)',border:'3px solid rgba(255,107,157,0.25)',boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 0 60px rgba(255,107,157,0.05)'}}>
             <div className="absolute top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-pink-400/60 uppercase tracking-widest">📷</div>
           </div>
