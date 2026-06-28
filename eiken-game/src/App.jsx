@@ -1030,7 +1030,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       const count = gameMode === 'normal' ? 10 : gameMode === 'survival' ? 50 : 30;
       setQuestions(getRandomQuestions(grade, count));
     }
-  },[grade]);
+  },[grade, gameMode]);
 
   const handleAnswer=useCallback((si)=>{
     if(fb!==null)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
@@ -1286,7 +1286,7 @@ const IdiomLearnMode=({grade,onExit,onFinish})=>{
 
   const handleNextBatch=()=>{
     if(batch+1>=totalBatches){onFinish({score:tScore*100,correctCount:tCorrect,totalQuestions:tQ,maxCombo:0});return;}
-    setBatch(p=>p+1);setPhase('flash');setCardIdx(0);setFlipped(false);setBScore(0);setQuizOptions({});lastPlayedIdx.current=-1;
+    setBatch(p=>p+1);setPhase('flash');setCardIdx(0);setFlipped(false);setBScore(0);quizOptionsRef.current={};lastPlayedIdx.current=-1;
   };
 
   const prog=((batch*BS+(phase==='flash'?cardIdx:BS))/shuffled.length)*100;
@@ -1848,6 +1848,7 @@ export default function App(){
 
   const handleStartReview = (questions) => {
     setSg(0);
+    setGameKey(k => k + 1);
     setGs(GAME_STATES.PLAYING);
     setWrongThisGame([]);
   };
@@ -1894,13 +1895,13 @@ export default function App(){
       {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onSortingSection={()=>setGs('SORTING_MENU')} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} />}
       {gs===GAME_STATES.PLAYING&&<GameScreen key={gameKey} grade={sg} gameMode={gameMode} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
       {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} onRetry={()=>{setWrongThisGame([]);setGameKey(k=>k+1);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
-      {gs===GAME_STATES.IDIOM_MENU&&<IdiomMenu onStartLearn={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_LEARN);}} onStartTest={(g)=>{setSg(g);setGs(GAME_STATES.IDIOM_TEST);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
-      {gs===GAME_STATES.IDIOM_LEARN&&<IdiomLearnMode grade={sg} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)} onFinish={(r)=>handleIdiomEnd(r)}/>}
-      {gs===GAME_STATES.IDIOM_TEST&&<IdiomTestMode grade={sg} onGameEnd={handleIdiomEnd} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)}/>}
-      {gs===GAME_STATES.IDIOM_RESULT&&<ResultScreen result={gr} grade={sg} title="熟語テスト結果" onRetry={()=>setGs(GAME_STATES.IDIOM_TEST)} onMenu={()=>{setGs(GAME_STATES.IDIOM_MENU);setGr(null);}} highScore={ihs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
-      {gs==='SORTING_MENU'&&<SortingMenu onStart={(g)=>{setSg(g);setGs(GAME_STATES.SORTING);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
-      {gs===GAME_STATES.SORTING&&<SortingGame grade={sg} onGameEnd={handleSortingEnd} onExit={()=>setGs(GAME_STATES.MENU)}/>}
-      {gs===GAME_STATES.SORTING_RESULT&&<ResultScreen result={gr} grade={sg} title="仕分け結果" onRetry={()=>setGs(GAME_STATES.SORTING)} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={0} xpEarned={gr?.score||0} saveData={saveData} />}
+      {gs===GAME_STATES.IDIOM_MENU&&<IdiomMenu onStartLearn={(g)=>{setSg(g);setGameKey(k=>k+1);setGs(GAME_STATES.IDIOM_LEARN);}} onStartTest={(g)=>{setSg(g);setGameKey(k=>k+1);setGs(GAME_STATES.IDIOM_TEST);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
+      {gs===GAME_STATES.IDIOM_LEARN&&<IdiomLearnMode key={gameKey} grade={sg} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)} onFinish={(r)=>handleIdiomEnd(r)}/>}
+      {gs===GAME_STATES.IDIOM_TEST&&<IdiomTestMode key={gameKey} grade={sg} onGameEnd={handleIdiomEnd} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)}/>}
+      {gs===GAME_STATES.IDIOM_RESULT&&<ResultScreen result={gr} grade={sg} title="熟語テスト結果" onRetry={()=>{setGameKey(k=>k+1);setGs(GAME_STATES.IDIOM_TEST);}} onMenu={()=>{setGs(GAME_STATES.IDIOM_MENU);setGr(null);}} highScore={ihs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
+      {gs==='SORTING_MENU'&&<SortingMenu onStart={(g)=>{setSg(g);setGameKey(k=>k+1);setGs(GAME_STATES.SORTING);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
+      {gs===GAME_STATES.SORTING&&<SortingGame key={gameKey} grade={sg} onGameEnd={handleSortingEnd} onExit={()=>setGs(GAME_STATES.MENU)}/>}
+      {gs===GAME_STATES.SORTING_RESULT&&<ResultScreen result={gr} grade={sg} title="ドブル結果" onRetry={()=>{setGameKey(k=>k+1);setGs(GAME_STATES.SORTING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={0} xpEarned={gr?.score||0} saveData={saveData} />}
       {gs==='REVIEW'&&<ReviewScreen wrongHistory={saveData.wrongHistory} onStartReview={handleStartReview} onBack={()=>setGs(GAME_STATES.MENU)} />}
     </>
   );
