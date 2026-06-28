@@ -1342,11 +1342,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       }
       else { setCi(p=>p+1); setTimeLeft(getAdaptiveTime()); }
     // 級・問題タイプ別の表示時間（3級は文が長いので長めに）
-    const isSentence = cq.type==='grammar'||cq.type==='idiom';
-    const displayTime = ok
-      ? (isSentence ? (grade===3 ? 3500 : 2500) : 1200)
-      : (isSentence ? (grade===3 ? 5500 : 4000) : 2500);
-    },displayTime);
+    },(() => { const s = cq.type==='grammar'||cq.type==='idiom'; return ok ? (s ? (grade===3?3500:2500) : 1200) : (s ? (grade===3?5500:4000) : 2500); })());
   },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd,lives,gameMode,recentResults,lastBoostCombo]);
   handleAnswerRef.current=handleAnswer;
 
