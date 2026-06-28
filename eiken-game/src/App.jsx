@@ -440,72 +440,107 @@ const shuffleOptions=(q)=>{const o=q.options.map((t,i)=>({text:t,isCorrect:i===q
 const getRandomQuestions=(g,c=10)=>shuffleArray(getQuestionsByGrade(g)).slice(0,c).map(q=>shuffleOptions(q));
 const GAME_STATES={MENU:'menu',PLAYING:'playing',RESULT:'result',IDIOM_MENU:'idiom_menu',IDIOM_LEARN:'idiom_learn',IDIOM_TEST:'idiom_test',IDIOM_RESULT:'idiom_result',SORTING:'sorting',SORTING_RESULT:'sorting_result'};
 
-// ======== 仕分けゲームデータ ========
-// カテゴリ写真 (Unsplash - free to use)
-const categoryImages = {
-  animals: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=200&h=200&fit=crop',
-  food: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
-  school: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=200&h=200&fit=crop',
-  body: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=200&h=200&fit=crop',
-  colors: 'https://images.unsplash.com/photo-1525909002-1b05e0c869d8?w=200&h=200&fit=crop',
-  numbers: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=200&h=200&fit=crop',
-  nouns: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=200&h=200&fit=crop',
-  verbs: 'https://images.unsplash.com/photo-1461896836934-bd45ba8fcf9b?w=200&h=200&fit=crop',
-  adjectives: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=200&h=200&fit=crop',
-  adverbs: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
-  emotions: 'https://images.unsplash.com/photo-1531747056505-94dc8c5e0a5d?w=200&h=200&fit=crop',
-  places: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=200&h=200&fit=crop',
-  positive: 'https://images.unsplash.com/photo-1489710437720-ebb67ec84dd2?w=200&h=200&fit=crop',
-  negative: 'https://images.unsplash.com/photo-1534330207526-8e81f10ec6fc?w=200&h=200&fit=crop',
-};
-const sortingCategories = {
+// ======== ドブル風ゲームデータ ========
+// 各アイテム: 英単語 + 意味 + 写真 (Unsplash free)
+const dobbleItems = {
   5: [
-    { left: { name: '動物', emoji: '🐾', img: categoryImages.animals }, right: { name: '食べ物', emoji: '🍎', img: categoryImages.food }, words: [
-      { word: 'dog', meaning: '犬', category: 'left' },{ word: 'cat', meaning: '猫', category: 'left' },{ word: 'bird', meaning: '鳥', category: 'left' },{ word: 'fish', meaning: '魚', category: 'left' },{ word: 'rabbit', meaning: 'うさぎ', category: 'left' },{ word: 'bear', meaning: 'くま', category: 'left' },{ word: 'lion', meaning: 'ライオン', category: 'left' },{ word: 'elephant', meaning: 'ぞう', category: 'left' },
-      { word: 'apple', meaning: 'りんご', category: 'right' },{ word: 'bread', meaning: 'パン', category: 'right' },{ word: 'rice', meaning: 'ご飯', category: 'right' },{ word: 'orange', meaning: 'オレンジ', category: 'right' },{ word: 'banana', meaning: 'バナナ', category: 'right' },{ word: 'grape', meaning: 'ぶどう', category: 'right' },{ word: 'cake', meaning: 'ケーキ', category: 'right' },{ word: 'egg', meaning: '卵', category: 'right' },
-    ]},
-    { left: { name: '学校', emoji: '🏫', img: categoryImages.school }, right: { name: '体', emoji: '🧑', img: categoryImages.body }, words: [
-      { word: 'pen', meaning: 'ペン', category: 'left' },{ word: 'book', meaning: '本', category: 'left' },{ word: 'desk', meaning: '机', category: 'left' },{ word: 'chair', meaning: 'いす', category: 'left' },{ word: 'eraser', meaning: '消しゴム', category: 'left' },{ word: 'pencil', meaning: 'えんぴつ', category: 'left' },{ word: 'ruler', meaning: '定規', category: 'left' },{ word: 'bag', meaning: 'かばん', category: 'left' },
-      { word: 'hand', meaning: '手', category: 'right' },{ word: 'eye', meaning: '目', category: 'right' },{ word: 'ear', meaning: '耳', category: 'right' },{ word: 'nose', meaning: '鼻', category: 'right' },{ word: 'mouth', meaning: '口', category: 'right' },{ word: 'head', meaning: '頭', category: 'right' },{ word: 'foot', meaning: '足', category: 'right' },{ word: 'arm', meaning: '腕', category: 'right' },
-    ]},
-    { left: { name: '色', emoji: '🎨', img: categoryImages.colors }, right: { name: '数字', emoji: '🔢', img: categoryImages.numbers }, words: [
-      { word: 'red', meaning: '赤', category: 'left' },{ word: 'blue', meaning: '青', category: 'left' },{ word: 'green', meaning: '緑', category: 'left' },{ word: 'yellow', meaning: '黄色', category: 'left' },{ word: 'white', meaning: '白', category: 'left' },{ word: 'black', meaning: '黒', category: 'left' },{ word: 'pink', meaning: 'ピンク', category: 'left' },{ word: 'purple', meaning: '紫', category: 'left' },
-      { word: 'one', meaning: '1', category: 'right' },{ word: 'two', meaning: '2', category: 'right' },{ word: 'three', meaning: '3', category: 'right' },{ word: 'five', meaning: '5', category: 'right' },{ word: 'ten', meaning: '10', category: 'right' },{ word: 'seven', meaning: '7', category: 'right' },{ word: 'eight', meaning: '8', category: 'right' },{ word: 'twelve', meaning: '12', category: 'right' },
-    ]},
+    { word: 'dog', meaning: '犬', img: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&h=200&fit=crop' },
+    { word: 'cat', meaning: '猫', img: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&h=200&fit=crop' },
+    { word: 'bird', meaning: '鳥', img: 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=200&h=200&fit=crop' },
+    { word: 'fish', meaning: '魚', img: 'https://images.unsplash.com/photo-1524704654690-b56c05c78a00?w=200&h=200&fit=crop' },
+    { word: 'rabbit', meaning: 'うさぎ', img: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=200&h=200&fit=crop' },
+    { word: 'bear', meaning: 'くま', img: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=200&h=200&fit=crop' },
+    { word: 'elephant', meaning: 'ぞう', img: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=200&h=200&fit=crop' },
+    { word: 'lion', meaning: 'ライオン', img: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=200&h=200&fit=crop' },
+    { word: 'apple', meaning: 'りんご', img: 'https://images.unsplash.com/photo-1584306354486-8bc9e10e8e4e?w=200&h=200&fit=crop' },
+    { word: 'banana', meaning: 'バナナ', img: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=200&h=200&fit=crop' },
+    { word: 'orange', meaning: 'オレンジ', img: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=200&h=200&fit=crop' },
+    { word: 'cake', meaning: 'ケーキ', img: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop' },
+    { word: 'egg', meaning: '卵', img: 'https://images.unsplash.com/photo-1582169296194-e4d644c48063?w=200&h=200&fit=crop' },
+    { word: 'book', meaning: '本', img: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=200&h=200&fit=crop' },
+    { word: 'pen', meaning: 'ペン', img: 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=200&h=200&fit=crop' },
+    { word: 'flower', meaning: '花', img: 'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=200&h=200&fit=crop' },
+    { word: 'sun', meaning: '太陽', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop' },
+    { word: 'moon', meaning: '月', img: 'https://images.unsplash.com/photo-1532693322450-2f6e13862879?w=200&h=200&fit=crop' },
+    { word: 'tree', meaning: '木', img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop' },
+    { word: 'car', meaning: '車', img: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=200&h=200&fit=crop' },
+    { word: 'house', meaning: '家', img: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=200&h=200&fit=crop' },
+    { word: 'water', meaning: '水', img: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&h=200&fit=crop' },
+    { word: 'star', meaning: '星', img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop' },
+    { word: 'hat', meaning: '帽子', img: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=200&h=200&fit=crop' },
+    { word: 'clock', meaning: '時計', img: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=200&h=200&fit=crop' },
+    { word: 'umbrella', meaning: '傘', img: 'https://images.unsplash.com/photo-1534309466160-70b22cc6254b?w=200&h=200&fit=crop' },
   ],
   4: [
-    { left: { name: '名詞', emoji: '📦', img: categoryImages.nouns }, right: { name: '動詞', emoji: '🏃', img: categoryImages.verbs }, words: [
-      { word: 'experience', meaning: '経験', category: 'left' },{ word: 'success', meaning: '成功', category: 'left' },{ word: 'reason', meaning: '理由', category: 'left' },{ word: 'opinion', meaning: '意見', category: 'left' },{ word: 'culture', meaning: '文化', category: 'left' },{ word: 'memory', meaning: '記憶', category: 'left' },{ word: 'ability', meaning: '能力', category: 'left' },{ word: 'habit', meaning: '習慣', category: 'left' },
-      { word: 'decide', meaning: '決める', category: 'right' },{ word: 'believe', meaning: '信じる', category: 'right' },{ word: 'imagine', meaning: '想像する', category: 'right' },{ word: 'improve', meaning: '改善する', category: 'right' },{ word: 'prepare', meaning: '準備する', category: 'right' },{ word: 'discover', meaning: '発見する', category: 'right' },{ word: 'explain', meaning: '説明する', category: 'right' },{ word: 'suggest', meaning: '提案する', category: 'right' },
-    ]},
-    { left: { name: '形容詞', emoji: '✨', img: categoryImages.adjectives }, right: { name: '副詞', emoji: '💨', img: categoryImages.adverbs }, words: [
-      { word: 'expensive', meaning: '高価な', category: 'left' },{ word: 'cheap', meaning: '安い', category: 'left' },{ word: 'famous', meaning: '有名な', category: 'left' },{ word: 'popular', meaning: '人気の', category: 'left' },{ word: 'necessary', meaning: '必要な', category: 'left' },{ word: 'possible', meaning: '可能な', category: 'left' },{ word: 'dangerous', meaning: '危険な', category: 'left' },{ word: 'comfortable', meaning: '快適な', category: 'left' },
-      { word: 'usually', meaning: '普通は', category: 'right' },{ word: 'probably', meaning: 'たぶん', category: 'right' },{ word: 'especially', meaning: '特に', category: 'right' },{ word: 'actually', meaning: '実際に', category: 'right' },{ word: 'recently', meaning: '最近', category: 'right' },{ word: 'suddenly', meaning: '突然に', category: 'right' },{ word: 'carefully', meaning: '注意深く', category: 'right' },{ word: 'certainly', meaning: '確かに', category: 'right' },
-    ]},
-    { left: { name: '感情', emoji: '😊', img: categoryImages.emotions }, right: { name: '場所', emoji: '🏠', img: categoryImages.places }, words: [
-      { word: 'happy', meaning: '幸せな', category: 'left' },{ word: 'angry', meaning: '怒った', category: 'left' },{ word: 'excited', meaning: '興奮した', category: 'left' },{ word: 'nervous', meaning: '緊張した', category: 'left' },{ word: 'surprised', meaning: '驚いた', category: 'left' },{ word: 'worried', meaning: '心配な', category: 'left' },{ word: 'lonely', meaning: '寂しい', category: 'left' },{ word: 'proud', meaning: '誇りに思う', category: 'left' },
-      { word: 'hospital', meaning: '病院', category: 'right' },{ word: 'museum', meaning: '博物館', category: 'right' },{ word: 'library', meaning: '図書館', category: 'right' },{ word: 'airport', meaning: '空港', category: 'right' },{ word: 'factory', meaning: '工場', category: 'right' },{ word: 'stadium', meaning: 'スタジアム', category: 'right' },{ word: 'restaurant', meaning: 'レストラン', category: 'right' },{ word: 'theater', meaning: '劇場', category: 'right' },
-    ]},
+    { word: 'camera', meaning: 'カメラ', img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=200&h=200&fit=crop' },
+    { word: 'mountain', meaning: '山', img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200&h=200&fit=crop' },
+    { word: 'bridge', meaning: '橋', img: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=200&h=200&fit=crop' },
+    { word: 'bicycle', meaning: '自転車', img: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=200&h=200&fit=crop' },
+    { word: 'guitar', meaning: 'ギター', img: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=200&h=200&fit=crop' },
+    { word: 'piano', meaning: 'ピアノ', img: 'https://images.unsplash.com/photo-1520523839897-bd33c68d826d?w=200&h=200&fit=crop' },
+    { word: 'rainbow', meaning: '虹', img: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=200&h=200&fit=crop' },
+    { word: 'library', meaning: '図書館', img: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=200&h=200&fit=crop' },
+    { word: 'hospital', meaning: '病院', img: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=200&h=200&fit=crop' },
+    { word: 'airport', meaning: '空港', img: 'https://images.unsplash.com/photo-1436491865332-7a61a109db05?w=200&h=200&fit=crop' },
+    { word: 'island', meaning: '島', img: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=200&h=200&fit=crop' },
+    { word: 'ocean', meaning: '海', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=200&fit=crop' },
+    { word: 'desert', meaning: '砂漠', img: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=200&h=200&fit=crop' },
+    { word: 'forest', meaning: '森', img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop' },
+    { word: 'castle', meaning: '城', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&h=200&fit=crop' },
+    { word: 'rocket', meaning: 'ロケット', img: 'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=200&h=200&fit=crop' },
+    { word: 'diamond', meaning: 'ダイヤ', img: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=200&h=200&fit=crop' },
+    { word: 'volcano', meaning: '火山', img: 'https://images.unsplash.com/photo-1554232456-8727aae0cfa4?w=200&h=200&fit=crop' },
+    { word: 'candle', meaning: 'ロウソク', img: 'https://images.unsplash.com/photo-1602523961358-f9f03dd557db?w=200&h=200&fit=crop' },
+    { word: 'compass', meaning: 'コンパス', img: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=200&h=200&fit=crop' },
+    { word: 'ladder', meaning: 'はしご', img: 'https://images.unsplash.com/photo-1529446559873-2205a2e4ae4f?w=200&h=200&fit=crop' },
+    { word: 'globe', meaning: '地球儀', img: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=200&h=200&fit=crop' },
+    { word: 'telescope', meaning: '望遠鏡', img: 'https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4f5?w=200&h=200&fit=crop' },
+    { word: 'lighthouse', meaning: '灯台', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop' },
+    { word: 'butterfly', meaning: '蝶', img: 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?w=200&h=200&fit=crop' },
+    { word: 'penguin', meaning: 'ペンギン', img: 'https://images.unsplash.com/photo-1551986782-d0169b3f8fa7?w=200&h=200&fit=crop' },
   ],
   3: [
-    { left: { name: '名詞', emoji: '📦', img: categoryImages.nouns }, right: { name: '動詞', emoji: '🏃', img: categoryImages.verbs }, words: [
-      { word: 'opportunity', meaning: '機会', category: 'left' },{ word: 'responsibility', meaning: '責任', category: 'left' },{ word: 'achievement', meaning: '達成', category: 'left' },{ word: 'knowledge', meaning: '知識', category: 'left' },{ word: 'advantage', meaning: '利点', category: 'left' },{ word: 'development', meaning: '発展', category: 'left' },{ word: 'relationship', meaning: '関係', category: 'left' },{ word: 'possibility', meaning: '可能性', category: 'left' },
-      { word: 'concentrate', meaning: '集中する', category: 'right' },{ word: 'investigate', meaning: '調査する', category: 'right' },{ word: 'appreciate', meaning: '感謝する', category: 'right' },{ word: 'encourage', meaning: '励ます', category: 'right' },{ word: 'establish', meaning: '設立する', category: 'right' },{ word: 'determine', meaning: '決定する', category: 'right' },{ word: 'recognize', meaning: '認識する', category: 'right' },{ word: 'represent', meaning: '代表する', category: 'right' },
-    ]},
-    { left: { name: '形容詞', emoji: '✨', img: categoryImages.adjectives }, right: { name: '副詞', emoji: '💨', img: categoryImages.adverbs }, words: [
-      { word: 'significant', meaning: '重要な', category: 'left' },{ word: 'appropriate', meaning: '適切な', category: 'left' },{ word: 'available', meaning: '利用可能な', category: 'left' },{ word: 'essential', meaning: '必須の', category: 'left' },{ word: 'enormous', meaning: '巨大な', category: 'left' },{ word: 'obvious', meaning: '明らかな', category: 'left' },{ word: 'valuable', meaning: '価値のある', category: 'left' },{ word: 'reasonable', meaning: '合理的な', category: 'left' },
-      { word: 'eventually', meaning: '結局', category: 'right' },{ word: 'frequently', meaning: '頻繁に', category: 'right' },{ word: 'unfortunately', meaning: '残念ながら', category: 'right' },{ word: 'approximately', meaning: 'およそ', category: 'right' },{ word: 'immediately', meaning: 'すぐに', category: 'right' },{ word: 'properly', meaning: '適切に', category: 'right' },{ word: 'completely', meaning: '完全に', category: 'right' },{ word: 'definitely', meaning: '確実に', category: 'right' },
-    ]},
-    { left: { name: 'ポジティブ', emoji: '👍', img: categoryImages.positive }, right: { name: 'ネガティブ', emoji: '👎', img: categoryImages.negative }, words: [
-      { word: 'appreciate', meaning: '感謝する', category: 'left' },{ word: 'encourage', meaning: '励ます', category: 'left' },{ word: 'contribute', meaning: '貢献する', category: 'left' },{ word: 'achieve', meaning: '達成する', category: 'left' },{ word: 'improve', meaning: '改善する', category: 'left' },{ word: 'satisfy', meaning: '満足させる', category: 'left' },{ word: 'support', meaning: '支援する', category: 'left' },{ word: 'succeed', meaning: '成功する', category: 'left' },
-      { word: 'suffer', meaning: '苦しむ', category: 'right' },{ word: 'complain', meaning: '文句を言う', category: 'right' },{ word: 'refuse', meaning: '拒否する', category: 'right' },{ word: 'destroy', meaning: '破壊する', category: 'right' },{ word: 'ignore', meaning: '無視する', category: 'right' },{ word: 'disappoint', meaning: '失望させる', category: 'right' },{ word: 'criticize', meaning: '批判する', category: 'right' },{ word: 'struggle', meaning: '苦闘する', category: 'right' },
-    ]},
+    { word: 'architecture', meaning: '建築', img: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=200&h=200&fit=crop' },
+    { word: 'sculpture', meaning: '彫刻', img: 'https://images.unsplash.com/photo-1544413660-299165566b1d?w=200&h=200&fit=crop' },
+    { word: 'laboratory', meaning: '研究室', img: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=200&h=200&fit=crop' },
+    { word: 'satellite', meaning: '衛星', img: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=200&h=200&fit=crop' },
+    { word: 'microscope', meaning: '顕微鏡', img: 'https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?w=200&h=200&fit=crop' },
+    { word: 'fossil', meaning: '化石', img: 'https://images.unsplash.com/photo-1560986752-2e31f5c6bab7?w=200&h=200&fit=crop' },
+    { word: 'glacier', meaning: '氷河', img: 'https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=200&h=200&fit=crop' },
+    { word: 'waterfall', meaning: '滝', img: 'https://images.unsplash.com/photo-1494472155656-f34e81b17ddc?w=200&h=200&fit=crop' },
+    { word: 'tornado', meaning: '竜巻', img: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=200&h=200&fit=crop' },
+    { word: 'earthquake', meaning: '地震', img: 'https://images.unsplash.com/photo-1545552987-720aa18145c2?w=200&h=200&fit=crop' },
+    { word: 'constellation', meaning: '星座', img: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=200&h=200&fit=crop' },
+    { word: 'pyramid', meaning: 'ピラミッド', img: 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=200&h=200&fit=crop' },
+    { word: 'cathedral', meaning: '大聖堂', img: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=200&h=200&fit=crop' },
+    { word: 'submarine', meaning: '潜水艦', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop' },
+    { word: 'helicopter', meaning: 'ヘリコプター', img: 'https://images.unsplash.com/photo-1534790566855-4cb788d389ec?w=200&h=200&fit=crop' },
+    { word: 'orchestra', meaning: 'オーケストラ', img: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=200&h=200&fit=crop' },
+    { word: 'treasure', meaning: '宝物', img: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=200&h=200&fit=crop' },
+    { word: 'creature', meaning: '生き物', img: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=200&h=200&fit=crop' },
+    { word: 'fireworks', meaning: '花火', img: 'https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?w=200&h=200&fit=crop' },
+    { word: 'crystal', meaning: '水晶', img: 'https://images.unsplash.com/photo-1519638831568-d9897f54ed69?w=200&h=200&fit=crop' },
+    { word: 'compass', meaning: '羅針盤', img: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=200&h=200&fit=crop' },
+    { word: 'anchor', meaning: '錨', img: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=200&h=200&fit=crop' },
+    { word: 'parachute', meaning: 'パラシュート', img: 'https://images.unsplash.com/photo-1534281305182-30c3d82e2b28?w=200&h=200&fit=crop' },
+    { word: 'binoculars', meaning: '双眼鏡', img: 'https://images.unsplash.com/photo-1502982899975-893c9cf39028?w=200&h=200&fit=crop' },
+    { word: 'stethoscope', meaning: '聴診器', img: 'https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=200&h=200&fit=crop' },
+    { word: 'thermometer', meaning: '温度計', img: 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?w=200&h=200&fit=crop' },
   ],
 };
-const getSortingSet = (grade) => {
-  const sets = sortingCategories[grade] || sortingCategories[5];
-  return sets[Math.floor(Math.random() * sets.length)];
+
+// ドブルのラウンド生成: 2枚のカードにN個ずつアイテムを配置、共通は1つだけ
+const generateDobbleRound = (items, itemsPerCard = 5) => {
+  const shuffled = shuffleArray([...items]);
+  const matchItem = shuffled[0];
+  const others = shuffled.slice(1);
+  const card1Others = others.slice(0, itemsPerCard - 1);
+  const card2Others = others.slice(itemsPerCard - 1, (itemsPerCard - 1) * 2);
+  const card1 = shuffleArray([matchItem, ...card1Others]);
+  const card2 = shuffleArray([matchItem, ...card2Others]);
+  return { card1, card2, matchWord: matchItem.word };
 };
+const DOBBLE_ROUNDS = 10;
 const gradeColors={5:'#00d9ff',4:'#ffd93d',3:'#ff6b9d'};
 const optLabels=['A','B','C','D'];
 
@@ -705,7 +740,7 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,hig
           <span className="text-2xl">📚</span><span className="text-lg text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>熟語マスター</span>
         </button>
         <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#00f5d4,#00d9ff)',boxShadow:'0 10px 40px rgba(0,245,212,0.3)'}} onClick={onSortingSection}>
-          <span className="text-2xl">🗂️</span><span className="text-lg text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>仕分けゲーム</span>
+          <span className="text-2xl">🎯</span><span className="text-lg text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>ドブル英単語</span>
         </button>
         {wrongCount > 0 && (
           <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff8e53)',boxShadow:'0 10px 40px rgba(255,107,107,0.3)'}} onClick={onReviewSection}>
@@ -1161,27 +1196,29 @@ const IdiomTestMode=({grade,onGameEnd,onExit})=>{
   );
 };
 
-// ======== 仕分けメニュー ========
+// ======== ドブルメニュー ========
 const SortingMenu = ({onStart, onBack}) => {
-  const grades=[{level:5,name:'5級',desc:'動物 vs 食べ物 など',color:'#00d9ff',emoji:'🌟'},{level:4,name:'4級',desc:'名詞 vs 動詞 など',color:'#ffd93d',emoji:'⭐'},{level:3,name:'3級',desc:'形容詞 vs 副詞 など',color:'#ff6b9d',emoji:'💫'}];
+  const grades=[{level:5,name:'5級',desc:'犬・猫・りんご…身近な単語',color:'#00d9ff',emoji:'🌟'},{level:4,name:'4級',desc:'カメラ・橋・ペンギン…',color:'#ffd93d',emoji:'⭐'},{level:3,name:'3級',desc:'建築・衛星・オーケストラ…',color:'#ff6b9d',emoji:'💫'}];
   return (
     <div className="min-h-screen p-6 flex flex-col items-center justify-center gap-8" style={{background:'radial-gradient(circle at 50% 20%,rgba(0,245,212,0.15) 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
       <button className="absolute top-6 left-6 p-3 rounded-xl text-white hover:bg-white/10 transition-all text-2xl" onClick={onBack}>←</button>
       <div className="text-center">
-        <div className="w-24 h-24 mx-auto mb-4 rounded-2xl overflow-hidden shadow-2xl" style={{boxShadow:'0 10px 40px rgba(0,245,212,0.3)'}}>
-          <img src={categoryImages.animals} alt="" className="w-full h-full object-cover"/>
+        <div className="flex justify-center gap-2 mb-4">
+          <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white/20 shadow-lg" style={{border:'3px solid rgba(0,245,212,0.4)'}}><img src={dobbleItems[5][0].img} alt="" className="w-full h-full object-cover"/></div>
+          <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white/20 shadow-lg -ml-4 mt-2" style={{border:'3px solid rgba(255,217,61,0.4)'}}><img src={dobbleItems[5][3].img} alt="" className="w-full h-full object-cover"/></div>
+          <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white/20 shadow-lg -ml-4" style={{border:'3px solid rgba(255,107,157,0.4)'}}><img src={dobbleItems[5][8].img} alt="" className="w-full h-full object-cover"/></div>
         </div>
-        <h1 className="text-4xl font-black" style={{fontFamily:"'Noto Sans JP',sans-serif",background:'linear-gradient(135deg,#00f5d4,#00d9ff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>仕分けゲーム</h1>
-        <p className="text-gray-400 mt-2" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>単語を正しいカテゴリーに振り分けよう！</p>
-        <p className="text-gray-500 text-sm mt-1" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>スワイプ or タップで仕分け</p>
+        <h1 className="text-4xl font-black" style={{fontFamily:"'Noto Sans JP',sans-serif",background:'linear-gradient(135deg,#00f5d4,#ffd93d)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>ドブル英単語</h1>
+        <p className="text-gray-400 mt-2" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>2枚のカードから同じ単語を見つけよう！</p>
+        <p className="text-gray-500 text-sm mt-1" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>写真と英単語で覚える × スピード勝負</p>
       </div>
       <div className="flex flex-col gap-4 w-full max-w-md">
         {grades.map((g,i) => (
           <button key={g.level} className="flex items-center gap-4 p-5 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#252542 0%,#1a1a2e 100%)',border:`2px solid ${g.color}40`,boxShadow:`0 4px 20px ${g.color}20`,animation:'slideUp 0.5s ease forwards',animationDelay:`${i*0.1}s`}} onClick={()=>onStart(g.level)}>
             <span className="text-4xl">{g.emoji}</span>
             <div className="flex-1 text-left">
-              <div className="text-xl font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif",color:g.color}}>{g.name}</div>
-              <div className="text-sm text-gray-400">{g.desc}</div>
+              <div className="text-xl font-bold" style={{fontFamily:"'Noto Sans JP',sans-serif",color:g.color}}>{g.name}</div>
+              <div className="text-sm text-gray-400" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>{g.desc}</div>
             </div>
             <span className="text-2xl text-gray-500">→</span>
           </button>
@@ -1191,218 +1228,186 @@ const SortingMenu = ({onStart, onBack}) => {
   );
 };
 
-// ======== 仕分けゲーム画面 ========
+// ======== ドブル風ゲーム画面 ========
 const SortingGame = ({grade, onGameEnd, onExit}) => {
-  const [sortingSet, setSortingSet] = useState(null);
-  const [words, setWords] = useState([]);
-  const [ci, setCi] = useState(0);
+  const [round, setRound] = useState(0);
+  const [roundData, setRoundData] = useState(null);
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [cc, setCc] = useState(0);
   const [fb, setFb] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(45);
+  const [roundTime, setRoundTime] = useState(0);
   const [showExit, setShowExit] = useState(false);
-  const [slideDir, setSlideDir] = useState(null);
-  const [touchStart, setTouchStart] = useState(null);
-  const [dragX, setDragX] = useState(0);
+  const [cardSizes, setCardSizes] = useState([]);
   const tRef = useRef(null);
+  const roundStartRef = useRef(Date.now());
   const color = gradeColors[grade];
+  const items = dobbleItems[grade] || dobbleItems[5];
 
-  useEffect(() => {
-    const set = getSortingSet(grade);
-    setSortingSet(set);
-    setWords(shuffleArray([...set.words]));
-  }, [grade]);
+  const startNewRound = useCallback(() => {
+    const data = generateDobbleRound(items, 5);
+    setRoundData(data);
+    setFb(null);
+    roundStartRef.current = Date.now();
+    setRoundTime(0);
+    // ランダムサイズ・回転で各アイテムの見た目を変える（ドブルらしさ）
+    const sizes = Array.from({length: 10}, () => ({
+      scale: 0.8 + Math.random() * 0.4,
+      rotate: Math.floor(Math.random() * 30) - 15,
+    }));
+    setCardSizes(sizes);
+  }, [items]);
 
-  // Timer
+  useEffect(() => { startNewRound(); }, [grade]);
+
+  // Round timer (counts up for speed bonus)
   useEffect(() => {
-    if (!words.length) return;
-    tRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(tRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    if (!roundData || fb) return;
+    tRef.current = setInterval(() => setRoundTime(p => p + 0.1), 100);
     return () => clearInterval(tRef.current);
-  }, [words.length]);
+  }, [roundData, fb, round]);
 
-  // Time up check
-  useEffect(() => {
-    if (timeLeft === 0 && words.length > 0) {
-      onGameEnd({ score, correctCount: cc, maxCombo, totalQuestions: ci, mode: 'sorting' });
-    }
-  }, [timeLeft]);
-
-  const handleSort = useCallback((direction) => {
-    if (fb !== null || ci >= words.length) return;
-    const cw = words[ci];
-    const isCorrect = cw.category === direction;
-    setSlideDir(direction);
+  const handleTap = useCallback((word) => {
+    if (fb) return;
+    clearInterval(tRef.current);
+    const elapsed = (Date.now() - roundStartRef.current) / 1000;
+    const isCorrect = word === roundData.matchWord;
 
     if (isCorrect) {
-      const pts = 100 + combo * 30;
+      const speedBonus = Math.max(0, Math.floor((10 - elapsed) * 20));
+      const pts = 100 + speedBonus + combo * 30;
       setScore(p => p + pts);
       setCombo(p => p + 1);
       setMaxCombo(p => Math.max(p, combo + 1));
       setCc(p => p + 1);
-      setFb({ type: 'correct', points: pts });
+      setFb({ type: 'correct', points: pts, word, elapsed: elapsed.toFixed(1) });
       playCorrectChime();
-      setTimeout(() => playSound(cw.word), 200);
+      setTimeout(() => playSound(word), 300);
     } else {
       setCombo(0);
-      setFb({ type: 'wrong', correct: direction === 'left' ? 'right' : 'left' });
+      setFb({ type: 'wrong', word, correctWord: roundData.matchWord });
       playErrorSound();
     }
 
     setTimeout(() => {
-      setFb(null);
-      setSlideDir(null);
-      setDragX(0);
-      if (ci + 1 >= words.length) {
-        const finalScore = isCorrect ? score + 100 + combo * 30 : score;
+      if (round + 1 >= DOBBLE_ROUNDS) {
+        const finalScore = isCorrect ? score + 100 + Math.max(0, Math.floor((10 - elapsed) * 20)) + combo * 30 : score;
         const finalCC = isCorrect ? cc + 1 : cc;
-        onGameEnd({ score: finalScore, correctCount: finalCC, maxCombo: Math.max(maxCombo, isCorrect ? combo + 1 : maxCombo), totalQuestions: words.length, mode: 'sorting' });
+        onGameEnd({ score: finalScore, correctCount: finalCC, maxCombo: Math.max(maxCombo, isCorrect ? combo + 1 : maxCombo), totalQuestions: DOBBLE_ROUNDS, mode: 'dobble' });
       } else {
-        setCi(p => p + 1);
+        setRound(p => p + 1);
+        startNewRound();
       }
-    }, isCorrect ? 600 : 1200);
-  }, [ci, words, score, combo, maxCombo, cc, fb, onGameEnd]);
+    }, isCorrect ? 1200 : 2000);
+  }, [fb, roundData, score, combo, maxCombo, cc, round, onGameEnd, startNewRound]);
 
-  // Touch/swipe handling
-  const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
-  const handleTouchMove = (e) => {
-    if (touchStart === null || fb) return;
-    setDragX(e.touches[0].clientX - touchStart);
+  if (!roundData) return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
+
+  const prog = ((round) / DOBBLE_ROUNDS) * 100;
+
+  // カードアイテムのレンダリング
+  const renderCardItem = (item, idx, cardIdx) => {
+    const si = cardIdx * 5 + idx;
+    const sz = cardSizes[si] || { scale: 1, rotate: 0 };
+    const isMatch = fb && item.word === roundData.matchWord;
+    const isWrong = fb?.type === 'wrong' && item.word === fb.word;
+    return (
+      <button
+        key={item.word + cardIdx}
+        className="flex flex-col items-center gap-1 p-1 rounded-xl transition-all"
+        style={{
+          transform: `scale(${sz.scale}) rotate(${sz.rotate}deg)`,
+          opacity: fb && !isMatch ? 0.4 : 1,
+          background: isMatch ? 'rgba(107,255,142,0.3)' : isWrong ? 'rgba(255,107,107,0.3)' : 'transparent',
+          border: isMatch ? '2px solid #6bff8e' : isWrong ? '2px solid #ff6b6b' : '2px solid transparent',
+          animation: isMatch ? 'pop 0.3s ease' : undefined,
+        }}
+        onClick={() => handleTap(item.word)}
+        disabled={!!fb}
+      >
+        <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden shadow-md">
+          <img src={item.img} alt={item.word} className="w-full h-full object-cover" loading="eager"/>
+        </div>
+        <span className="text-xs md:text-sm font-bold text-white" style={{fontFamily:"'Inter',sans-serif"}}>{item.word}</span>
+      </button>
+    );
   };
-  const handleTouchEnd = () => {
-    if (Math.abs(dragX) > 60) {
-      handleSort(dragX < 0 ? 'left' : 'right');
-    } else {
-      setDragX(0);
-    }
-    setTouchStart(null);
-  };
-
-  // Keyboard support
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'ArrowLeft') handleSort('left');
-      if (e.key === 'ArrowRight') handleSort('right');
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [handleSort]);
-
-  if (!sortingSet || !words.length) return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
-
-  const cw = words[ci] || words[words.length - 1];
-  const prog = ((ci) / words.length) * 100;
-  const tc = timeLeft <= 10 ? '#ff6b6b' : timeLeft <= 25 ? '#ffd93d' : '#6bff8e';
-  const leftHighlight = dragX < -30 ? 'scale(1.08)' : 'scale(1)';
-  const rightHighlight = dragX > 30 ? 'scale(1.08)' : 'scale(1)';
 
   return (
-    <div className="min-h-screen p-4 flex flex-col" style={{background:`radial-gradient(circle at 30% 70%,${color}15 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)`}}>
+    <div className="min-h-screen p-3 flex flex-col" style={{background:'linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
       <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>setShowExit(false)}/>
 
       {/* Header */}
-      <div className="flex justify-between items-center p-4 rounded-2xl mb-4" style={{background:'rgba(37,37,66,0.8)'}}>
+      <div className="flex justify-between items-center p-3 rounded-2xl mb-3" style={{background:'rgba(37,37,66,0.8)'}}>
         <button className="p-2 rounded-xl hover:bg-white/10 transition-all" onClick={()=>{clearInterval(tRef.current);setShowExit(true);}}><span className="text-2xl">←</span></button>
-        <div className="flex items-center gap-4">
-          <div className="px-4 py-2 rounded-full text-base font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div>
-          <div className="flex flex-col items-center"><span className="text-xs text-gray-400">SCORE</span><span className="text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div>
-          {combo >= 2 && <div className="px-3 py-1 rounded-full" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}}><span className="text-sm text-white font-bold">×{combo}</span></div>}
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1 rounded-full text-sm font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div>
+          <div className="flex flex-col items-center"><span className="text-[10px] text-gray-400">SCORE</span><span className="text-lg" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div>
+          {combo >= 2 && <div className="px-2 py-1 rounded-full" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}}><span className="text-xs text-white font-bold">×{combo}</span></div>}
         </div>
-        <div className="flex flex-col items-center"><span className="text-xs text-gray-400">TIME</span><span className="text-xl font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif",color:tc}}>{timeLeft}s</span></div>
+        <div className="flex flex-col items-center"><span className="text-[10px] text-gray-400">ROUND</span><span className="text-lg font-bold text-white">{round+1}/{DOBBLE_ROUNDS}</span></div>
       </div>
 
       {/* Progress */}
-      <div className="w-full max-w-md mx-auto mb-2">
-        <div className="text-center text-sm text-gray-400 mb-1">{ci}/{words.length}</div>
+      <div className="w-full max-w-lg mx-auto mb-2">
         <div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div>
       </div>
 
-      {/* Main Game Area */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+      {/* Instruction */}
+      <div className="text-center mb-2">
+        <span className="text-sm font-bold px-4 py-1 rounded-full" style={{background:'rgba(255,217,61,0.15)',color:'#ffd93d',fontFamily:"'Noto Sans JP',sans-serif"}}>
+          同じ単語をタップ！
+        </span>
+        {!fb && <div className="text-xs text-gray-500 mt-1" style={{fontFamily:"'Inter',sans-serif"}}>{roundTime.toFixed(1)}s</div>}
+      </div>
 
-        {/* Category Labels (Top) */}
-        <div className="flex justify-between w-full px-2 gap-4">
-          <div className="flex-1 flex flex-col items-center gap-2 px-4 py-3 rounded-2xl transition-all duration-200 overflow-hidden" style={{background: dragX < -30 ? 'rgba(107,255,142,0.25)' : 'rgba(37,37,66,0.8)', border: dragX < -30 ? '2px solid #6bff8e' : '2px solid rgba(255,255,255,0.08)', transform: leftHighlight}}>
-            {sortingSet.left.img ? (
-              <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg"><img src={sortingSet.left.img} alt={sortingSet.left.name} className="w-full h-full object-cover"/></div>
-            ) : <span className="text-3xl">{sortingSet.left.emoji}</span>}
-            <span className="text-sm font-bold text-white" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>{sortingSet.left.name}</span>
-            <span className="text-[10px] text-gray-500">← スワイプ</span>
-          </div>
-          <div className="flex-1 flex flex-col items-center gap-2 px-4 py-3 rounded-2xl transition-all duration-200 overflow-hidden" style={{background: dragX > 30 ? 'rgba(107,255,142,0.25)' : 'rgba(37,37,66,0.8)', border: dragX > 30 ? '2px solid #6bff8e' : '2px solid rgba(255,255,255,0.08)', transform: rightHighlight}}>
-            {sortingSet.right.img ? (
-              <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg"><img src={sortingSet.right.img} alt={sortingSet.right.name} className="w-full h-full object-cover"/></div>
-            ) : <span className="text-3xl">{sortingSet.right.emoji}</span>}
-            <span className="text-sm font-bold text-white" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>{sortingSet.right.name}</span>
-            <span className="text-[10px] text-gray-500">スワイプ →</span>
+      {/* Two Cards */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 max-w-lg mx-auto w-full">
+
+        {/* Card 1 */}
+        <div className="w-full rounded-3xl p-4 relative" style={{background:'radial-gradient(circle at 30% 30%,rgba(0,217,255,0.1) 0%,transparent 60%),rgba(37,37,66,0.9)',border:'2px solid rgba(0,217,255,0.2)',boxShadow:'0 8px 32px rgba(0,0,0,0.3)'}}>
+          <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Card 1</div>
+          <div className="flex flex-wrap justify-center gap-3 pt-3">
+            {roundData.card1.map((item, i) => renderCardItem(item, i, 0))}
           </div>
         </div>
 
-        {/* Word Card */}
-        <div
-          className="relative w-full"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div
-            className="rounded-3xl p-8 text-center transition-all select-none"
-            style={{
-              background: fb?.type === 'correct' ? 'rgba(107,255,142,0.2)' : fb?.type === 'wrong' ? 'rgba(255,107,107,0.2)' : 'rgba(37,37,66,0.9)',
-              border: fb?.type === 'correct' ? '3px solid #6bff8e' : fb?.type === 'wrong' ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.1)',
-              transform: slideDir === 'left' ? 'translateX(-120%) rotate(-15deg)' : slideDir === 'right' ? 'translateX(120%) rotate(15deg)' : `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`,
-              transition: slideDir ? 'transform 0.4s ease' : dragX ? 'none' : 'transform 0.3s ease, background 0.3s, border 0.3s',
-              opacity: slideDir ? 0.5 : 1,
-              boxShadow: fb?.type === 'correct' ? '0 0 40px rgba(107,255,142,0.4)' : fb?.type === 'wrong' ? '0 0 40px rgba(255,107,107,0.4)' : '0 10px 40px rgba(0,0,0,0.3)',
-            }}
-          >
-            <div className="text-4xl md:text-5xl font-black text-white mb-3" style={{fontFamily:"'Inter',sans-serif",letterSpacing:'-0.02em'}}>{cw.word}</div>
-            <div className="text-lg font-medium" style={{fontFamily:"'Noto Sans JP',sans-serif",color:'#a0aec0'}}>{cw.meaning}</div>
-          </div>
-
-          {/* Direction indicators during drag */}
-          {dragX < -30 && !fb && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-4xl" style={{animation:'pulse 0.5s infinite'}}>⬅️</div>}
-          {dragX > 30 && !fb && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-4xl" style={{animation:'pulse 0.5s infinite'}}>➡️</div>}
+        {/* VS divider */}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-[1px] bg-gray-600"/>
+          <span className="text-sm font-bold text-gray-500" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>VS</span>
+          <div className="w-12 h-[1px] bg-gray-600"/>
         </div>
 
-        {/* Feedback overlay */}
-        {fb && (
-          <div className="text-center" style={{animation:'pop 0.3s ease'}}>
+        {/* Card 2 */}
+        <div className="w-full rounded-3xl p-4 relative" style={{background:'radial-gradient(circle at 70% 70%,rgba(255,107,157,0.1) 0%,transparent 60%),rgba(37,37,66,0.9)',border:'2px solid rgba(255,107,157,0.2)',boxShadow:'0 8px 32px rgba(0,0,0,0.3)'}}>
+          <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Card 2</div>
+          <div className="flex flex-wrap justify-center gap-3 pt-3">
+            {roundData.card2.map((item, i) => renderCardItem(item, i, 1))}
+          </div>
+        </div>
+      </div>
+
+      {/* Feedback overlay */}
+      {fb && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="flex flex-col items-center gap-2" style={{animation:'pop 0.3s ease'}}>
             {fb.type === 'correct' ? (
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-4xl">⭕</span>
-                <span className="text-xl font-black" style={{color:'#6bff8e',fontFamily:"'Inter',sans-serif"}}>+{fb.points}pt</span>
-              </div>
+              <>
+                <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl" style={{background:'#6bff8e',boxShadow:'0 0 40px rgba(107,255,142,0.6)'}}>✓</div>
+                <span className="text-2xl font-black" style={{color:'#6bff8e',fontFamily:"'Inter',sans-serif"}}>+{fb.points}pt</span>
+                <span className="text-sm text-gray-400">{fb.elapsed}秒 ⚡</span>
+              </>
             ) : (
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-4xl">❌</span>
-                <span className="text-sm text-gray-400">正しくは「{fb.correct === 'left' ? sortingSet.left.name : sortingSet.right.name}」</span>
-              </div>
+              <>
+                <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl" style={{background:'#ff6b6b',boxShadow:'0 0 40px rgba(255,107,107,0.6)'}}>✗</div>
+                <span className="text-lg font-bold text-white" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>正解は「{fb.correctWord}」</span>
+              </>
             )}
           </div>
-        )}
-
-        {/* Tap buttons (for non-swipe users) */}
-        {!fb && (
-          <div className="flex gap-4 w-full">
-            <button className="flex-1 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2" style={{background:'linear-gradient(135deg,#00d9ff,#0099cc)',color:'white',fontFamily:"'Noto Sans JP','Inter',sans-serif",boxShadow:'0 6px 20px rgba(0,217,255,0.3)'}} onClick={()=>handleSort('left')}>
-              <span>←</span><span>{sortingSet.left.name}</span>
-            </button>
-            <button className="flex-1 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2" style={{background:'linear-gradient(135deg,#ff6b9d,#cc3366)',color:'white',fontFamily:"'Noto Sans JP','Inter',sans-serif",boxShadow:'0 6px 20px rgba(255,107,157,0.3)'}} onClick={()=>handleSort('right')}>
-              <span>{sortingSet.right.name}</span><span>→</span>
-            </button>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
