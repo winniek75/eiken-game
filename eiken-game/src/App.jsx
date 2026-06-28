@@ -1041,6 +1041,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
   const[boostActive,setBoostActive]=useState(false); // boost run mini-game
   const[lastBoostCombo,setLastBoostCombo]=useState(0); // 前回ブースト発動時のcombo
   const totalTimeRef=useRef(totalTime);
+  const scoreRef=useRef(score);const ccRef=useRef(cc);const ciRef=useRef(ci);const maxComboRef=useRef(maxCombo);
   const color=gradeColors[grade];
 
   // モード別の1問あたり制限時間
@@ -1084,10 +1085,12 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
     if(fb!==null)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
     setRecentResults(prev => [...prev, ok]);
     const newCombo = ok ? combo + 1 : 0;
-    const shouldBoost = ok && newCombo >= 3 && newCombo % 3 === 0 && newCombo !== lastBoostCombo;
+    const shouldBoost = gameMode === 'survival' && ok && newCombo >= 3 && newCombo % 3 === 0 && newCombo !== lastBoostCombo;
 
     if(ok){
-      const pts=100+Math.floor(timeLeft*10)+combo*50;
+      // モード別スコア計算
+      const timeBonus = gameMode === 'timeattack' ? Math.max(0, Math.floor(totalTimeRef.current * 2)) : Math.floor(timeLeft * 10);
+      const pts = 100 + timeBonus + combo * 50;
       setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);
       setFb({type:'correct',points:pts});
       // Combo milestone check
@@ -1101,13 +1104,16 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       setMm(ms[Math.floor(Math.random()*ms.length)]);
       setMe(newCombo>=5?'excited':'happy');
       playCorrectChime();setTimeout(()=>playSound(cq.options[cq.answer]),300);
+      // Ref更新（タイムアタック終了時のクロージャ用）
+      scoreRef.current=score+pts;ccRef.current=cc+1;ciRef.current=ci;maxComboRef.current=Math.max(maxCombo,combo+1);
     } else {
       setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer]});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(cq.options[cq.answer]),500);if(onWrong)onWrong(cq);
       if (gameMode === 'survival' && lives !== null) setLives(prev => prev - 1);
     }
 
     const endGame = (isCorrect) => {
-      const finalScore = isCorrect ? score+100+Math.floor(timeLeft*10)+combo*50 : score;
+      const timeBonus = gameMode === 'timeattack' ? Math.max(0, Math.floor(totalTimeRef.current * 2)) : Math.floor(timeLeft * 10);
+      const finalScore = isCorrect ? score + 100 + timeBonus + combo * 50 : score;
       const finalCorrect = isCorrect ? cc+1 : cc;
       onGameEnd({score:finalScore, correctCount:finalCorrect, maxCombo:Math.max(maxCombo, isCorrect?combo+1:maxCombo), totalQuestions:ci+1, mode:gameMode});
     };
@@ -1159,7 +1165,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       setTotalTime(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          onGameEnd({score, correctCount:cc, maxCombo, totalQuestions:ci, mode:'timeattack'});
+          onGameEnd({score:scoreRef.current, correctCount:ccRef.current, maxCombo:maxComboRef.current, totalQuestions:ciRef.current+1, mode:'timeattack'});
           return 0;
         }
         totalTimeRef.current = prev - 1;
