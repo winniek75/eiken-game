@@ -736,11 +736,13 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,hig
           <span className="text-sm text-white/60">10問</span>
         </button>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 6px 20px rgba(255,142,83,0.3)'}} onClick={()=>onStartGame(selectedGrade,'timeattack')}>
+          <button className="flex flex-col items-center px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 6px 20px rgba(255,142,83,0.3)'}} onClick={()=>onStartGame(selectedGrade,'timeattack')}>
             <span className="text-lg text-gray-900 font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>⏱ タイムアタック</span>
+            <span className="text-xs text-gray-700">90秒で何問解ける？</span>
           </button>
-          <button className="flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff3366)',boxShadow:'0 6px 20px rgba(255,51,102,0.3)'}} onClick={()=>onStartGame(selectedGrade,'survival')}>
+          <button className="flex flex-col items-center px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff3366)',boxShadow:'0 6px 20px rgba(255,51,102,0.3)'}} onClick={()=>onStartGame(selectedGrade,'survival')}>
             <span className="text-lg text-white font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>❤️ サバイバル</span>
+            <span className="text-xs text-white/70">3ミスで終了！</span>
           </button>
         </div>
       </div>}
@@ -1030,23 +1032,36 @@ const BoostRun = ({combo, color, onComplete}) => {
 };
 
 const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='normal'})=>{
-  const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(15);const[cc,setCc]=useState(0);const[showHint,setShowHint]=useState(false);const[fb,setFb]=useState(null);const[me,setMe]=useState('thinking');const[mm,setMm]=useState('がんばれ〜！');const[showExit,setShowExit]=useState(false);const tRef=useRef(null);const handleAnswerRef=useRef(null);
+  const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(gameMode==='timeattack'?999:gameMode==='survival'?8:15);const[cc,setCc]=useState(0);const[showHint,setShowHint]=useState(false);const[fb,setFb]=useState(null);const[me,setMe]=useState('thinking');const[mm,setMm]=useState('がんばれ〜！');const[showExit,setShowExit]=useState(false);const tRef=useRef(null);const handleAnswerRef=useRef(null);
   const[recentResults,setRecentResults]=useState([]); // adaptive difficulty tracking
   const[comboMilestone,setComboMilestone]=useState(false);
   const[showConfetti,setShowConfetti]=useState(false);
   const[lives,setLives]=useState(gameMode==='survival'?3:null); // survival mode
-  const[totalTime,setTotalTime]=useState(gameMode==='timeattack'?60:null); // time attack
+  const[totalTime,setTotalTime]=useState(gameMode==='timeattack'?90:null); // time attack: 90秒
   const[boostActive,setBoostActive]=useState(false); // boost run mini-game
   const[lastBoostCombo,setLastBoostCombo]=useState(0); // 前回ブースト発動時のcombo
   const totalTimeRef=useRef(totalTime);
   const color=gradeColors[grade];
 
-  // Adaptive difficulty: adjust time based on recent performance
+  // モード別の1問あたり制限時間
+  const getBaseTime = () => {
+    if (gameMode === 'timeattack') return 999; // タイムアタックは個別タイマーなし
+    if (gameMode === 'survival') return 8; // サバイバルは短い
+    return 15; // ノーマル
+  };
+  // Adaptive difficulty: adjust time based on recent performance (normalのみ)
   const getAdaptiveTime = () => {
+    if (gameMode === 'timeattack') return 999;
+    if (gameMode === 'survival') {
+      // サバイバル: 進むほど短くなる
+      const base = 8;
+      const reduction = Math.floor(ci / 5) * 0.5;
+      return Math.max(5, base - reduction);
+    }
     if (recentResults.length < 3) return 15;
     const recentAcc = recentResults.slice(-5).filter(Boolean).length / Math.min(recentResults.length, 5);
-    if (recentAcc >= 0.8) return 12; // doing well → less time
-    if (recentAcc <= 0.4) return 20; // struggling → more time
+    if (recentAcc >= 0.8) return 12;
+    if (recentAcc <= 0.4) return 20;
     return 15;
   };
 
@@ -1055,8 +1070,13 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       const shuffled = shuffleArray([...reviewQuestions]).slice(0, 10);
       setQuestions(shuffled);
     } else {
-      const count = gameMode === 'normal' ? 10 : gameMode === 'survival' ? 50 : 30;
-      setQuestions(getRandomQuestions(grade, count));
+      // タイムアタック＆サバイバルは大量に用意（事実上無限ループ）
+      const count = gameMode === 'normal' ? 10 : 100;
+      const allQ = getQuestionsByGrade(grade);
+      // 100問以上必要な場合はプール全体を複数回シャッフルして連結
+      let pool = [];
+      while (pool.length < count) { pool = pool.concat(shuffleArray([...allQ])); }
+      setQuestions(pool.slice(0, count).map(q => shuffleOptions(q)));
     }
   },[grade, gameMode]);
 
@@ -1129,8 +1149,8 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
     setTimeLeft(getAdaptiveTime());
   }, []);
 
-  // Question timer
-  useEffect(()=>{if(!questions.length||boostActive)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
+  // Question timer (タイムアタックは全体タイマーのみなので個別タイマー不要)
+  useEffect(()=>{if(!questions.length||boostActive||gameMode==='timeattack')return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
 
   // Time attack global timer
   useEffect(()=>{
@@ -1149,7 +1169,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
     return () => clearInterval(interval);
   },[questions.length]);
   if(!questions.length)return<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
-  const cq=questions[ci];const prog=((ci+1)/questions.length)*100;const tc=timeLeft<=5?'#ff6b6b':timeLeft<=10?'#ffd93d':'#6bff8e';
+  const cq=questions[ci];const prog=gameMode==='normal'?((ci+1)/questions.length)*100:0;const tc=gameMode==='timeattack'?'#00d9ff':timeLeft<=3?'#ff6b6b':timeLeft<=5?'#ffd93d':'#6bff8e';
   return(
     <div className="min-h-screen p-4" style={{background:`radial-gradient(circle at 30% 70%,${color}15 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)`}}>
       {boostActive && <BoostRun combo={combo} color={color} onComplete={handleBoostComplete}/>}
@@ -1163,10 +1183,12 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
           <div className="px-4 py-2 rounded-full text-lg font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div>
           <div className="flex flex-col"><span className="text-xs text-gray-400">SCORE</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div>
           {gameMode==='survival'&&lives!==null&&<div className="flex gap-1">{[...Array(3)].map((_,i)=>(<span key={i} className="text-xl" style={{opacity:i<lives?1:0.2}}>{i<lives?'❤️':'🖤'}</span>))}</div>}
-          {gameMode==='timeattack'&&totalTime!==null&&<div className="flex flex-col items-center"><span className="text-xs text-gray-400">TIME</span><span className="text-xl font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif",color:totalTime<=10?'#ff6b6b':totalTime<=30?'#ffd93d':'#6bff8e'}}>{totalTime}s</span></div>}
+          {gameMode==='timeattack'&&totalTime!==null&&<div className="flex flex-col items-center px-3 py-1 rounded-xl" style={{background:totalTime<=15?'rgba(255,107,107,0.2)':totalTime<=30?'rgba(255,217,61,0.15)':'rgba(0,217,255,0.1)',animation:totalTime<=10?'pulse 0.5s infinite':undefined}}><span className="text-xs text-gray-400">⏱ 残り時間</span><span className="text-2xl font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif",color:totalTime<=15?'#ff6b6b':totalTime<=30?'#ffd93d':'#00d9ff'}}>{totalTime}s</span></div>}
         </div>
-        <div className="flex-1 max-w-xs mx-4"><div className="text-center text-sm text-gray-400 mb-2">{ci+1}/{questions.length}</div><div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div></div>
-        <div className="relative w-14 h-14"><svg viewBox="0 0 36 36" className="w-full h-full -rotate-90"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#252542" strokeWidth="3"/><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={tc} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${(timeLeft/15)*100},100`} className="transition-all duration-1000"/></svg><span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:tc}}>{timeLeft}</span></div>
+        {gameMode==='normal'&&<div className="flex-1 max-w-xs mx-4"><div className="text-center text-sm text-gray-400 mb-2">{ci+1}/{questions.length}</div><div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div></div>}
+        {gameMode==='timeattack'&&<div className="flex flex-col items-center mx-4"><span className="text-xs text-gray-400">解答数</span><span className="text-2xl font-bold text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{cc}問</span></div>}
+        {gameMode==='survival'&&<div className="flex flex-col items-center mx-4"><span className="text-xs text-gray-400">生き残り</span><span className="text-2xl font-bold text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{ci+1}問目</span></div>}
+        {gameMode!=='timeattack'&&<div className="relative w-14 h-14"><svg viewBox="0 0 36 36" className="w-full h-full -rotate-90"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#252542" strokeWidth="3"/><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={tc} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${(timeLeft/(gameMode==='survival'?8:15))*100},100`} className="transition-all duration-1000"/></svg><span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:tc}}>{timeLeft}</span></div>}
       </div>
       <div className="max-w-4xl mx-auto grid md:grid-cols-[1fr_auto] gap-6">
         <div className="flex flex-col gap-5">
