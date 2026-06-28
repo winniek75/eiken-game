@@ -441,45 +441,62 @@ const getRandomQuestions=(g,c=10)=>shuffleArray(getQuestionsByGrade(g)).slice(0,
 const GAME_STATES={MENU:'menu',PLAYING:'playing',RESULT:'result',IDIOM_MENU:'idiom_menu',IDIOM_LEARN:'idiom_learn',IDIOM_TEST:'idiom_test',IDIOM_RESULT:'idiom_result',SORTING:'sorting',SORTING_RESULT:'sorting_result'};
 
 // ======== 仕分けゲームデータ ========
+// カテゴリ写真 (Unsplash - free to use)
+const categoryImages = {
+  animals: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=200&h=200&fit=crop',
+  food: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop',
+  school: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=200&h=200&fit=crop',
+  body: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=200&h=200&fit=crop',
+  colors: 'https://images.unsplash.com/photo-1525909002-1b05e0c869d8?w=200&h=200&fit=crop',
+  numbers: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=200&h=200&fit=crop',
+  nouns: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=200&h=200&fit=crop',
+  verbs: 'https://images.unsplash.com/photo-1461896836934-bd45ba8fcf9b?w=200&h=200&fit=crop',
+  adjectives: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=200&h=200&fit=crop',
+  adverbs: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
+  emotions: 'https://images.unsplash.com/photo-1531747056505-94dc8c5e0a5d?w=200&h=200&fit=crop',
+  places: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=200&h=200&fit=crop',
+  positive: 'https://images.unsplash.com/photo-1489710437720-ebb67ec84dd2?w=200&h=200&fit=crop',
+  negative: 'https://images.unsplash.com/photo-1534330207526-8e81f10ec6fc?w=200&h=200&fit=crop',
+};
 const sortingCategories = {
   5: [
-    { left: { name: '動物', emoji: '🐾' }, right: { name: '食べ物', emoji: '🍎' }, words: [
+    { left: { name: '動物', emoji: '🐾', img: categoryImages.animals }, right: { name: '食べ物', emoji: '🍎', img: categoryImages.food }, words: [
       { word: 'dog', meaning: '犬', category: 'left' },{ word: 'cat', meaning: '猫', category: 'left' },{ word: 'bird', meaning: '鳥', category: 'left' },{ word: 'fish', meaning: '魚', category: 'left' },{ word: 'rabbit', meaning: 'うさぎ', category: 'left' },{ word: 'bear', meaning: 'くま', category: 'left' },{ word: 'lion', meaning: 'ライオン', category: 'left' },{ word: 'elephant', meaning: 'ぞう', category: 'left' },
       { word: 'apple', meaning: 'りんご', category: 'right' },{ word: 'bread', meaning: 'パン', category: 'right' },{ word: 'rice', meaning: 'ご飯', category: 'right' },{ word: 'orange', meaning: 'オレンジ', category: 'right' },{ word: 'banana', meaning: 'バナナ', category: 'right' },{ word: 'grape', meaning: 'ぶどう', category: 'right' },{ word: 'cake', meaning: 'ケーキ', category: 'right' },{ word: 'egg', meaning: '卵', category: 'right' },
     ]},
-    { left: { name: '学校', emoji: '🏫' }, right: { name: '体', emoji: '🧑' }, words: [
+    { left: { name: '学校', emoji: '🏫', img: categoryImages.school }, right: { name: '体', emoji: '🧑', img: categoryImages.body }, words: [
       { word: 'pen', meaning: 'ペン', category: 'left' },{ word: 'book', meaning: '本', category: 'left' },{ word: 'desk', meaning: '机', category: 'left' },{ word: 'chair', meaning: 'いす', category: 'left' },{ word: 'eraser', meaning: '消しゴム', category: 'left' },{ word: 'pencil', meaning: 'えんぴつ', category: 'left' },{ word: 'ruler', meaning: '定規', category: 'left' },{ word: 'bag', meaning: 'かばん', category: 'left' },
       { word: 'hand', meaning: '手', category: 'right' },{ word: 'eye', meaning: '目', category: 'right' },{ word: 'ear', meaning: '耳', category: 'right' },{ word: 'nose', meaning: '鼻', category: 'right' },{ word: 'mouth', meaning: '口', category: 'right' },{ word: 'head', meaning: '頭', category: 'right' },{ word: 'foot', meaning: '足', category: 'right' },{ word: 'arm', meaning: '腕', category: 'right' },
     ]},
-    { left: { name: '色', emoji: '🎨' }, right: { name: '数字', emoji: '🔢' }, words: [
+    { left: { name: '色', emoji: '🎨', img: categoryImages.colors }, right: { name: '数字', emoji: '🔢', img: categoryImages.numbers }, words: [
       { word: 'red', meaning: '赤', category: 'left' },{ word: 'blue', meaning: '青', category: 'left' },{ word: 'green', meaning: '緑', category: 'left' },{ word: 'yellow', meaning: '黄色', category: 'left' },{ word: 'white', meaning: '白', category: 'left' },{ word: 'black', meaning: '黒', category: 'left' },{ word: 'pink', meaning: 'ピンク', category: 'left' },{ word: 'purple', meaning: '紫', category: 'left' },
       { word: 'one', meaning: '1', category: 'right' },{ word: 'two', meaning: '2', category: 'right' },{ word: 'three', meaning: '3', category: 'right' },{ word: 'five', meaning: '5', category: 'right' },{ word: 'ten', meaning: '10', category: 'right' },{ word: 'seven', meaning: '7', category: 'right' },{ word: 'eight', meaning: '8', category: 'right' },{ word: 'twelve', meaning: '12', category: 'right' },
     ]},
   ],
   4: [
-    { left: { name: '名詞', emoji: '📦' }, right: { name: '動詞', emoji: '🏃' }, words: [
+    { left: { name: '名詞', emoji: '📦', img: categoryImages.nouns }, right: { name: '動詞', emoji: '🏃', img: categoryImages.verbs }, words: [
       { word: 'experience', meaning: '経験', category: 'left' },{ word: 'success', meaning: '成功', category: 'left' },{ word: 'reason', meaning: '理由', category: 'left' },{ word: 'opinion', meaning: '意見', category: 'left' },{ word: 'culture', meaning: '文化', category: 'left' },{ word: 'memory', meaning: '記憶', category: 'left' },{ word: 'ability', meaning: '能力', category: 'left' },{ word: 'habit', meaning: '習慣', category: 'left' },
       { word: 'decide', meaning: '決める', category: 'right' },{ word: 'believe', meaning: '信じる', category: 'right' },{ word: 'imagine', meaning: '想像する', category: 'right' },{ word: 'improve', meaning: '改善する', category: 'right' },{ word: 'prepare', meaning: '準備する', category: 'right' },{ word: 'discover', meaning: '発見する', category: 'right' },{ word: 'explain', meaning: '説明する', category: 'right' },{ word: 'suggest', meaning: '提案する', category: 'right' },
     ]},
-    { left: { name: '形容詞', emoji: '✨' }, right: { name: '副詞', emoji: '💨' }, words: [
+    { left: { name: '形容詞', emoji: '✨', img: categoryImages.adjectives }, right: { name: '副詞', emoji: '💨', img: categoryImages.adverbs }, words: [
       { word: 'expensive', meaning: '高価な', category: 'left' },{ word: 'cheap', meaning: '安い', category: 'left' },{ word: 'famous', meaning: '有名な', category: 'left' },{ word: 'popular', meaning: '人気の', category: 'left' },{ word: 'necessary', meaning: '必要な', category: 'left' },{ word: 'possible', meaning: '可能な', category: 'left' },{ word: 'dangerous', meaning: '危険な', category: 'left' },{ word: 'comfortable', meaning: '快適な', category: 'left' },
       { word: 'usually', meaning: '普通は', category: 'right' },{ word: 'probably', meaning: 'たぶん', category: 'right' },{ word: 'especially', meaning: '特に', category: 'right' },{ word: 'actually', meaning: '実際に', category: 'right' },{ word: 'recently', meaning: '最近', category: 'right' },{ word: 'suddenly', meaning: '突然に', category: 'right' },{ word: 'carefully', meaning: '注意深く', category: 'right' },{ word: 'certainly', meaning: '確かに', category: 'right' },
     ]},
-    { left: { name: '感情 😊', emoji: '😊' }, right: { name: '場所 🏠', emoji: '🏠' }, words: [
+    { left: { name: '感情', emoji: '😊', img: categoryImages.emotions }, right: { name: '場所', emoji: '🏠', img: categoryImages.places }, words: [
       { word: 'happy', meaning: '幸せな', category: 'left' },{ word: 'angry', meaning: '怒った', category: 'left' },{ word: 'excited', meaning: '興奮した', category: 'left' },{ word: 'nervous', meaning: '緊張した', category: 'left' },{ word: 'surprised', meaning: '驚いた', category: 'left' },{ word: 'worried', meaning: '心配な', category: 'left' },{ word: 'lonely', meaning: '寂しい', category: 'left' },{ word: 'proud', meaning: '誇りに思う', category: 'left' },
       { word: 'hospital', meaning: '病院', category: 'right' },{ word: 'museum', meaning: '博物館', category: 'right' },{ word: 'library', meaning: '図書館', category: 'right' },{ word: 'airport', meaning: '空港', category: 'right' },{ word: 'factory', meaning: '工場', category: 'right' },{ word: 'stadium', meaning: 'スタジアム', category: 'right' },{ word: 'restaurant', meaning: 'レストラン', category: 'right' },{ word: 'theater', meaning: '劇場', category: 'right' },
     ]},
   ],
   3: [
-    { left: { name: '名詞', emoji: '📦' }, right: { name: '動詞', emoji: '🏃' }, words: [
+    { left: { name: '名詞', emoji: '📦', img: categoryImages.nouns }, right: { name: '動詞', emoji: '🏃', img: categoryImages.verbs }, words: [
       { word: 'opportunity', meaning: '機会', category: 'left' },{ word: 'responsibility', meaning: '責任', category: 'left' },{ word: 'achievement', meaning: '達成', category: 'left' },{ word: 'knowledge', meaning: '知識', category: 'left' },{ word: 'advantage', meaning: '利点', category: 'left' },{ word: 'development', meaning: '発展', category: 'left' },{ word: 'relationship', meaning: '関係', category: 'left' },{ word: 'possibility', meaning: '可能性', category: 'left' },
       { word: 'concentrate', meaning: '集中する', category: 'right' },{ word: 'investigate', meaning: '調査する', category: 'right' },{ word: 'appreciate', meaning: '感謝する', category: 'right' },{ word: 'encourage', meaning: '励ます', category: 'right' },{ word: 'establish', meaning: '設立する', category: 'right' },{ word: 'determine', meaning: '決定する', category: 'right' },{ word: 'recognize', meaning: '認識する', category: 'right' },{ word: 'represent', meaning: '代表する', category: 'right' },
     ]},
-    { left: { name: '形容詞', emoji: '✨' }, right: { name: '副詞', emoji: '💨' }, words: [
+    { left: { name: '形容詞', emoji: '✨', img: categoryImages.adjectives }, right: { name: '副詞', emoji: '💨', img: categoryImages.adverbs }, words: [
       { word: 'significant', meaning: '重要な', category: 'left' },{ word: 'appropriate', meaning: '適切な', category: 'left' },{ word: 'available', meaning: '利用可能な', category: 'left' },{ word: 'essential', meaning: '必須の', category: 'left' },{ word: 'enormous', meaning: '巨大な', category: 'left' },{ word: 'obvious', meaning: '明らかな', category: 'left' },{ word: 'valuable', meaning: '価値のある', category: 'left' },{ word: 'reasonable', meaning: '合理的な', category: 'left' },
       { word: 'eventually', meaning: '結局', category: 'right' },{ word: 'frequently', meaning: '頻繁に', category: 'right' },{ word: 'unfortunately', meaning: '残念ながら', category: 'right' },{ word: 'approximately', meaning: 'およそ', category: 'right' },{ word: 'immediately', meaning: 'すぐに', category: 'right' },{ word: 'properly', meaning: '適切に', category: 'right' },{ word: 'completely', meaning: '完全に', category: 'right' },{ word: 'definitely', meaning: '確実に', category: 'right' },
     ]},
-    { left: { name: 'ポジティブ 👍', emoji: '👍' }, right: { name: 'ネガティブ 👎', emoji: '👎' }, words: [
+    { left: { name: 'ポジティブ', emoji: '👍', img: categoryImages.positive }, right: { name: 'ネガティブ', emoji: '👎', img: categoryImages.negative }, words: [
       { word: 'appreciate', meaning: '感謝する', category: 'left' },{ word: 'encourage', meaning: '励ます', category: 'left' },{ word: 'contribute', meaning: '貢献する', category: 'left' },{ word: 'achieve', meaning: '達成する', category: 'left' },{ word: 'improve', meaning: '改善する', category: 'left' },{ word: 'satisfy', meaning: '満足させる', category: 'left' },{ word: 'support', meaning: '支援する', category: 'left' },{ word: 'succeed', meaning: '成功する', category: 'left' },
       { word: 'suffer', meaning: '苦しむ', category: 'right' },{ word: 'complain', meaning: '文句を言う', category: 'right' },{ word: 'refuse', meaning: '拒否する', category: 'right' },{ word: 'destroy', meaning: '破壊する', category: 'right' },{ word: 'ignore', meaning: '無視する', category: 'right' },{ word: 'disappoint', meaning: '失望させる', category: 'right' },{ word: 'criticize', meaning: '批判する', category: 'right' },{ word: 'struggle', meaning: '苦闘する', category: 'right' },
     ]},
@@ -1151,10 +1168,12 @@ const SortingMenu = ({onStart, onBack}) => {
     <div className="min-h-screen p-6 flex flex-col items-center justify-center gap-8" style={{background:'radial-gradient(circle at 50% 20%,rgba(0,245,212,0.15) 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
       <button className="absolute top-6 left-6 p-3 rounded-xl text-white hover:bg-white/10 transition-all text-2xl" onClick={onBack}>←</button>
       <div className="text-center">
-        <span className="text-6xl mb-4 block">🗂️</span>
-        <h1 className="text-4xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(135deg,#00f5d4,#00d9ff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>仕分けゲーム</h1>
-        <p className="text-gray-400 mt-2">単語を正しいカテゴリーに振り分けよう！</p>
-        <p className="text-gray-500 text-sm mt-1">スワイプ or タップで仕分け</p>
+        <div className="w-24 h-24 mx-auto mb-4 rounded-2xl overflow-hidden shadow-2xl" style={{boxShadow:'0 10px 40px rgba(0,245,212,0.3)'}}>
+          <img src={categoryImages.animals} alt="" className="w-full h-full object-cover"/>
+        </div>
+        <h1 className="text-4xl font-black" style={{fontFamily:"'Noto Sans JP',sans-serif",background:'linear-gradient(135deg,#00f5d4,#00d9ff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>仕分けゲーム</h1>
+        <p className="text-gray-400 mt-2" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>単語を正しいカテゴリーに振り分けよう！</p>
+        <p className="text-gray-500 text-sm mt-1" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>スワイプ or タップで仕分け</p>
       </div>
       <div className="flex flex-col gap-4 w-full max-w-md">
         {grades.map((g,i) => (
@@ -1311,16 +1330,20 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
       <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
 
         {/* Category Labels (Top) */}
-        <div className="flex justify-between w-full px-2">
-          <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl transition-all duration-200" style={{background: dragX < -30 ? 'rgba(107,255,142,0.25)' : 'rgba(37,37,66,0.8)', border: dragX < -30 ? '2px solid #6bff8e' : '2px solid transparent', transform: leftHighlight}}>
-            <span className="text-3xl">{sortingSet.left.emoji}</span>
-            <span className="text-sm font-bold text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{sortingSet.left.name}</span>
-            <span className="text-xs text-gray-400">← スワイプ</span>
+        <div className="flex justify-between w-full px-2 gap-4">
+          <div className="flex-1 flex flex-col items-center gap-2 px-4 py-3 rounded-2xl transition-all duration-200 overflow-hidden" style={{background: dragX < -30 ? 'rgba(107,255,142,0.25)' : 'rgba(37,37,66,0.8)', border: dragX < -30 ? '2px solid #6bff8e' : '2px solid rgba(255,255,255,0.08)', transform: leftHighlight}}>
+            {sortingSet.left.img ? (
+              <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg"><img src={sortingSet.left.img} alt={sortingSet.left.name} className="w-full h-full object-cover"/></div>
+            ) : <span className="text-3xl">{sortingSet.left.emoji}</span>}
+            <span className="text-sm font-bold text-white" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>{sortingSet.left.name}</span>
+            <span className="text-[10px] text-gray-500">← スワイプ</span>
           </div>
-          <div className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl transition-all duration-200" style={{background: dragX > 30 ? 'rgba(107,255,142,0.25)' : 'rgba(37,37,66,0.8)', border: dragX > 30 ? '2px solid #6bff8e' : '2px solid transparent', transform: rightHighlight}}>
-            <span className="text-3xl">{sortingSet.right.emoji}</span>
-            <span className="text-sm font-bold text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{sortingSet.right.name}</span>
-            <span className="text-xs text-gray-400">スワイプ →</span>
+          <div className="flex-1 flex flex-col items-center gap-2 px-4 py-3 rounded-2xl transition-all duration-200 overflow-hidden" style={{background: dragX > 30 ? 'rgba(107,255,142,0.25)' : 'rgba(37,37,66,0.8)', border: dragX > 30 ? '2px solid #6bff8e' : '2px solid rgba(255,255,255,0.08)', transform: rightHighlight}}>
+            {sortingSet.right.img ? (
+              <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg"><img src={sortingSet.right.img} alt={sortingSet.right.name} className="w-full h-full object-cover"/></div>
+            ) : <span className="text-3xl">{sortingSet.right.emoji}</span>}
+            <span className="text-sm font-bold text-white" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>{sortingSet.right.name}</span>
+            <span className="text-[10px] text-gray-500">スワイプ →</span>
           </div>
         </div>
 
@@ -1342,8 +1365,8 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
               boxShadow: fb?.type === 'correct' ? '0 0 40px rgba(107,255,142,0.4)' : fb?.type === 'wrong' ? '0 0 40px rgba(255,107,107,0.4)' : '0 10px 40px rgba(0,0,0,0.3)',
             }}
           >
-            <div className="text-4xl md:text-5xl font-black text-white mb-3" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{cw.word}</div>
-            <div className="text-lg text-gray-400">{cw.meaning}</div>
+            <div className="text-4xl md:text-5xl font-black text-white mb-3" style={{fontFamily:"'Inter',sans-serif",letterSpacing:'-0.02em'}}>{cw.word}</div>
+            <div className="text-lg font-medium" style={{fontFamily:"'Noto Sans JP',sans-serif",color:'#a0aec0'}}>{cw.meaning}</div>
           </div>
 
           {/* Direction indicators during drag */}
@@ -1357,7 +1380,7 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
             {fb.type === 'correct' ? (
               <div className="flex flex-col items-center gap-1">
                 <span className="text-4xl">⭕</span>
-                <span className="text-xl font-bold" style={{color:'#6bff8e',fontFamily:"'Dela Gothic One',sans-serif"}}>+{fb.points}pt</span>
+                <span className="text-xl font-black" style={{color:'#6bff8e',fontFamily:"'Inter',sans-serif"}}>+{fb.points}pt</span>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-1">
@@ -1371,11 +1394,11 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         {/* Tap buttons (for non-swipe users) */}
         {!fb && (
           <div className="flex gap-4 w-full">
-            <button className="flex-1 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95" style={{background:'linear-gradient(135deg,#00d9ff,#0099cc)',color:'white',fontFamily:"'Dela Gothic One',sans-serif",boxShadow:'0 6px 20px rgba(0,217,255,0.3)'}} onClick={()=>handleSort('left')}>
-              ← {sortingSet.left.name}
+            <button className="flex-1 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2" style={{background:'linear-gradient(135deg,#00d9ff,#0099cc)',color:'white',fontFamily:"'Noto Sans JP','Inter',sans-serif",boxShadow:'0 6px 20px rgba(0,217,255,0.3)'}} onClick={()=>handleSort('left')}>
+              <span>←</span><span>{sortingSet.left.name}</span>
             </button>
-            <button className="flex-1 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95" style={{background:'linear-gradient(135deg,#ff6b9d,#cc3366)',color:'white',fontFamily:"'Dela Gothic One',sans-serif",boxShadow:'0 6px 20px rgba(255,107,157,0.3)'}} onClick={()=>handleSort('right')}>
-              {sortingSet.right.name} →
+            <button className="flex-1 py-4 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2" style={{background:'linear-gradient(135deg,#ff6b9d,#cc3366)',color:'white',fontFamily:"'Noto Sans JP','Inter',sans-serif",boxShadow:'0 6px 20px rgba(255,107,157,0.3)'}} onClick={()=>handleSort('right')}>
+              <span>{sortingSet.right.name}</span><span>→</span>
             </button>
           </div>
         )}
@@ -1568,7 +1591,7 @@ export default function App(){
   return(
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@400;700;800&family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;700;900&display=swap');
         @keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-10px)}}
         @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
         @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
