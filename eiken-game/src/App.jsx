@@ -1823,7 +1823,7 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
       >
         <span className="px-4 py-2 rounded-full font-bold whitespace-nowrap" style={{
           fontFamily:"'Inter',sans-serif",
-          fontSize: `${Math.max(18, Math.min(32, 24 * sz.scale))}px`,
+          fontSize: `${Math.max(22, Math.min(38, 30 * sz.scale))}px`,
           color: isMatch ? '#1a1a2e' : isWrong ? '#fff' : '#fff',
           background: isMatch ? '#6bff8e' : isWrong ? '#ff6b6b' : 'rgba(255,255,255,0.1)',
           border: isMatch ? '2px solid #6bff8e' : isWrong ? '2px solid #ff6b6b' : '2px solid rgba(255,255,255,0.15)',
@@ -1853,8 +1853,8 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         disabled={!!fb}
       >
         <div className="rounded-full overflow-hidden shadow-lg flex items-center justify-center" style={{
-          width: `${Math.max(72, Math.min(120, 100 * sz.scale))}px`,
-          height: `${Math.max(72, Math.min(120, 100 * sz.scale))}px`,
+          width: `${Math.max(88, Math.min(140, 120 * sz.scale))}px`,
+          height: `${Math.max(88, Math.min(140, 120 * sz.scale))}px`,
           border: isMatch ? '3px solid #6bff8e' : isWrong ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.15)',
           boxShadow: isMatch ? '0 0 20px rgba(107,255,142,0.5)' : isWrong ? '0 0 20px rgba(255,107,107,0.5)' : '0 4px 12px rgba(0,0,0,0.4)',
           animation: isMatch ? 'pop 0.3s ease' : undefined,
