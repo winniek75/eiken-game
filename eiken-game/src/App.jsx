@@ -956,14 +956,14 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,hig
       {/* サブメニュー */}
       <div className="flex flex-wrap gap-3 justify-center">
         <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 10px 40px rgba(255,142,83,0.3)'}} onClick={onIdiomSection}>
-          <span className="text-2xl">📚</span><span className="text-lg text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>熟語マスター</span>
+          <span className="text-2xl">📚</span><span className="text-xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#1a1a2e',textShadow:'0 1px 0 rgba(255,255,255,0.3)'}}>熟語マスター</span>
         </button>
         <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#00f5d4,#00d9ff)',boxShadow:'0 10px 40px rgba(0,245,212,0.3)'}} onClick={onSortingSection}>
-          <span className="text-2xl">🎯</span><span className="text-lg text-gray-900 font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>ドブル英単語</span>
+          <span className="text-2xl">🎯</span><span className="text-xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#1a1a2e',textShadow:'0 1px 0 rgba(255,255,255,0.3)'}}>ドブル英単語</span>
         </button>
         {wrongCount > 0 && (
           <button className="flex items-center gap-3 px-8 py-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b6b,#ff8e53)',boxShadow:'0 10px 40px rgba(255,107,107,0.3)'}} onClick={onReviewSection}>
-            <span className="text-2xl">🔄</span><span className="text-lg text-white font-black" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>復習 ({wrongCount})</span>
+            <span className="text-2xl">🔄</span><span className="text-xl font-black" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#fff',textShadow:'0 2px 4px rgba(0,0,0,0.3)'}}>復習 ({wrongCount})</span>
           </button>
         )}
       </div>
@@ -1750,8 +1750,8 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
     setRoundTime(0);
     // ランダムサイズ・回転で各アイテムの見た目を変える（ドブルらしさ）
     const sizes = Array.from({length: 10}, () => ({
-      scale: 0.55 + Math.random() * 0.9,
-      rotate: Math.floor(Math.random() * 50) - 25,
+      scale: 0.75 + Math.random() * 0.5,
+      rotate: Math.floor(Math.random() * 30) - 15,
     }));
     setCardSizes(sizes);
   }, [items]);
@@ -1821,9 +1821,9 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         onClick={() => handleTap(item.word)}
         disabled={!!fb}
       >
-        <span className="px-3 py-1.5 rounded-full font-bold whitespace-nowrap" style={{
+        <span className="px-4 py-2 rounded-full font-bold whitespace-nowrap" style={{
           fontFamily:"'Inter',sans-serif",
-          fontSize: `${Math.max(11, Math.min(20, 14 * sz.scale))}px`,
+          fontSize: `${Math.max(14, Math.min(26, 18 * sz.scale))}px`,
           color: isMatch ? '#1a1a2e' : isWrong ? '#fff' : '#fff',
           background: isMatch ? '#6bff8e' : isWrong ? '#ff6b6b' : 'rgba(255,255,255,0.1)',
           border: isMatch ? '2px solid #6bff8e' : isWrong ? '2px solid #ff6b6b' : '2px solid rgba(255,255,255,0.15)',
@@ -1853,8 +1853,8 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         disabled={!!fb}
       >
         <div className="rounded-full overflow-hidden shadow-lg flex items-center justify-center" style={{
-          width: `${Math.max(40, Math.min(72, 52 * sz.scale))}px`,
-          height: `${Math.max(40, Math.min(72, 52 * sz.scale))}px`,
+          width: `${Math.max(56, Math.min(96, 72 * sz.scale))}px`,
+          height: `${Math.max(56, Math.min(96, 72 * sz.scale))}px`,
           border: isMatch ? '3px solid #6bff8e' : isWrong ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.15)',
           boxShadow: isMatch ? '0 0 20px rgba(107,255,142,0.5)' : isWrong ? '0 0 20px rgba(255,107,107,0.5)' : '0 4px 12px rgba(0,0,0,0.4)',
           animation: isMatch ? 'pop 0.3s ease' : undefined,
@@ -1866,11 +1866,11 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
   };
 
   return (
-    <div className="min-h-screen p-3 flex flex-col" style={{background:'linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
+    <div className="h-screen max-h-screen p-2 md:p-3 flex flex-col overflow-hidden" style={{background:'linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
       <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>setShowExit(false)}/>
 
       {/* Header */}
-      <div className="flex justify-between items-center p-3 rounded-2xl mb-2" style={{background:'rgba(37,37,66,0.8)'}}>
+      <div className="flex justify-between items-center p-2 md:p-3 rounded-2xl mb-1" style={{background:'rgba(37,37,66,0.8)'}}>
         <button className="p-2 rounded-xl hover:bg-white/10 transition-all" onClick={()=>{clearInterval(tRef.current);setShowExit(true);}}><span className="text-2xl">←</span></button>
         <div className="flex items-center gap-3">
           <div className="px-3 py-1 rounded-full text-sm font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div>
@@ -1893,11 +1893,11 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         {!fb && <span className="text-xs text-gray-500 ml-2" style={{fontFamily:"'Inter',sans-serif"}}>{roundTime.toFixed(1)}s</span>}
       </div>
 
-      {/* Two Round Cards */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-2 max-w-sm mx-auto w-full">
+      {/* Two Round Cards - horizontal on desktop, vertical on mobile */}
+      <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 w-full max-w-4xl mx-auto px-2">
 
         {/* Card 1: 英単語のみ（丸いカード） */}
-        <div className="relative" style={{width:'min(92vw, 380px)',height:'min(92vw, 380px)'}}>
+        <div className="relative flex-shrink-0 dobble-card">
           <div className="absolute inset-0 rounded-full" style={{background:'radial-gradient(circle at 40% 35%,rgba(0,217,255,0.12) 0%,rgba(37,37,66,0.95) 70%)',border:'3px solid rgba(0,217,255,0.25)',boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,217,255,0.05)'}}>
             <div className="absolute top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-cyan-400/60 uppercase tracking-widest">ABC</div>
           </div>
@@ -1905,14 +1905,14 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         </div>
 
         {/* VS */}
-        <div className="flex items-center gap-2 -my-1 z-10">
-          <div className="w-8 h-[1px] bg-gray-600"/>
+        <div className="flex md:flex-col items-center gap-2 -my-1 md:my-0 z-10">
+          <div className="w-8 md:w-[1px] h-[1px] md:h-8 bg-gray-600"/>
           <span className="text-xs font-bold text-gray-500" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>VS</span>
-          <div className="w-8 h-[1px] bg-gray-600"/>
+          <div className="w-8 md:w-[1px] h-[1px] md:h-8 bg-gray-600"/>
         </div>
 
         {/* Card 2: 写真のみ（丸いカード） */}
-        <div className="relative" style={{width:'min(92vw, 380px)',height:'min(92vw, 380px)'}}>
+        <div className="relative flex-shrink-0 dobble-card">
           <div className="absolute inset-0 rounded-full" style={{background:'radial-gradient(circle at 60% 65%,rgba(255,107,157,0.12) 0%,rgba(37,37,66,0.95) 70%)',border:'3px solid rgba(255,107,157,0.25)',boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 0 60px rgba(255,107,157,0.05)'}}>
             <div className="absolute top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-pink-400/60 uppercase tracking-widest">📷</div>
           </div>

@@ -124,3 +124,16 @@ body {
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
 }
+
+/* Dobble card responsive sizing */
+.dobble-card {
+  width: min(42dvh, 85vw, 340px);
+  height: min(42dvh, 85vw, 340px);
+}
+
+@media (min-width: 768px) {
+  .dobble-card {
+    width: min(70dvh, 42vw, 380px);
+    height: min(70dvh, 42vw, 380px);
+  }
+}
