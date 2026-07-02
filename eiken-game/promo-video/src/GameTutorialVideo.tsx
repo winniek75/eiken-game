@@ -10,6 +10,7 @@ import {
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { slide } from "@remotion/transitions/slide";
 import { fade } from "@remotion/transitions/fade";
+import { LightLeak } from "@remotion/light-leaks";
 import { loadFont } from "@remotion/google-fonts/NotoSansJP";
 
 const { fontFamily } = loadFont("normal", {
@@ -36,7 +37,73 @@ export const GameTutorialSchema = z.object({
 
 type TutorialProps = z.infer<typeof GameTutorialSchema>;
 
-// --- Scene: Hook Intro ---
+const BG_MAIN =
+  "radial-gradient(circle at 20% 20%, rgba(196,78,255,0.15) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,107,157,0.15) 0%, transparent 40%), linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%)";
+const BG_GAME =
+  "linear-gradient(180deg, #0a0a2e 0%, #1a1a3e 60%, #252542 100%)";
+const BG_RESULT =
+  "radial-gradient(circle at 50% 30%, rgba(255,217,61,0.1) 0%, transparent 50%), linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%)";
+const PANEL_BG = "rgba(37,37,66,0.9)";
+
+// ─── Floating Particles ───
+const FloatingParticles: React.FC<{ frame: number; count?: number; color?: string }> = ({
+  frame,
+  count = 20,
+  color = "rgba(108,92,231,0.25)",
+}) => (
+  <>
+    {Array.from({ length: count }).map((_, i) => {
+      const seed = i * 137.508;
+      const x = (seed * 7) % 1080;
+      const baseY = (seed * 11) % 1920;
+      const size = 3 + (i % 5) * 2;
+      const y = (baseY - frame * (0.3 + (i % 4) * 0.15) * 2) % 2100;
+      return (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            left: x,
+            top: y < -20 ? y + 2100 : y,
+            width: size,
+            height: size,
+            borderRadius: "50%",
+            background: color,
+            opacity: 0.4 + Math.sin(frame * 0.05 + i) * 0.3,
+          }}
+        />
+      );
+    })}
+  </>
+);
+
+// ─── Gradient Text ───
+const GradientText: React.FC<{
+  children: React.ReactNode;
+  from: string;
+  to: string;
+  fontSize: number;
+  style?: React.CSSProperties;
+}> = ({ children, from, to, fontSize, style }) => (
+  <div
+    style={{
+      fontSize,
+      fontWeight: 900,
+      fontFamily,
+      background: `linear-gradient(135deg, ${from}, ${to})`,
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      filter: `drop-shadow(0 0 20px ${from}88)`,
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+// ═══════════════════════════════════════════
+// Hook Intro
+// ═══════════════════════════════════════════
 const TutorialHookScene: React.FC<{
   gameNameJa: string;
   accentColor: string;
@@ -46,101 +113,117 @@ const TutorialHookScene: React.FC<{
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Text slams in
-  const hookScale = interpolate(frame, [0, 6], [2.5, 1], {
+  const hookScale = interpolate(frame, [0, 8], [3, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
 
-  const hookOpacity = interpolate(frame, [0, 4], [0, 1], {
+  const hookOpacity = interpolate(frame, [0, 5], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  // Subtitle fades in
-  const subOpacity = interpolate(frame, [0.5 * fps, 0.8 * fps], [0, 1], {
+  const subOpacity = interpolate(frame, [0.4 * fps, 0.7 * fps], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const subY = interpolate(frame, [0.5 * fps, 0.8 * fps], [20, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
-  });
-
-  // Timer text
-  const timerOpacity = interpolate(frame, [0.8 * fps, 1 * fps], [0, 1], {
-    extrapolateLeft: "clamp",
+  const driftScale = interpolate(frame, [0, 2 * fps], [1, 1.02], {
     extrapolateRight: "clamp",
   });
 
   return (
-    <AbsoluteFill
-      style={{
-        background: `linear-gradient(135deg, ${accentColor}, #1a1a2e)`,
-        fontFamily,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 40,
-      }}
-    >
-      {/* Decorative ring */}
-      <div
+    <AbsoluteFill style={{ background: BG_MAIN, fontFamily, scale: String(driftScale) }}>
+      <FloatingParticles frame={frame} count={20} color="rgba(196,78,255,0.2)" />
+
+      {/* Vignette */}
+      <AbsoluteFill
         style={{
-          position: "absolute",
-          width: 600,
-          height: 600,
-          borderRadius: "50%",
-          border: `3px solid ${secondaryColor}22`,
+          background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%)",
+          pointerEvents: "none",
         }}
       />
 
+      {/* Glow ring */}
       <div
         style={{
-          opacity: hookOpacity,
-          scale: String(hookScale),
-          fontSize: 88,
-          fontWeight: 900,
-          color: "white",
-          textAlign: "center",
-          textShadow: `0 4px 30px ${accentColor}88`,
+          position: "absolute",
+          left: 540 - 250,
+          top: 960 - 250,
+          width: 500,
+          height: 500,
+          borderRadius: "50%",
+          border: `2px solid ${secondaryColor}22`,
+          scale: String(1 + Math.sin(frame * 0.1) * 0.05),
         }}
-      >
-        {gameNameJa}
-      </div>
+      />
 
-      <div
+      <AbsoluteFill
         style={{
-          opacity: subOpacity,
-          translate: `0px ${subY}px`,
-          fontSize: 56,
-          fontWeight: 900,
-          color: goldColor,
-          textShadow: `0 0 30px ${goldColor}44`,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 36,
         }}
       >
-        遊び方、15秒で！
-      </div>
+        <div
+          style={{
+            opacity: hookOpacity,
+            scale: String(hookScale),
+          }}
+        >
+          <GradientText from="#00d9ff" to="#00f5d4" fontSize={88} style={{ textAlign: "center" }}>
+            {gameNameJa}
+          </GradientText>
+        </div>
 
-      <div
+        <div
+          style={{
+            opacity: subOpacity,
+            fontSize: 52,
+            fontWeight: 900,
+            color: goldColor,
+            textShadow: `0 0 30px ${goldColor}44`,
+          }}
+        >
+          遊び方、15秒で！
+        </div>
+
+        <div
+          style={{
+            opacity: interpolate(frame, [0.7 * fps, 1 * fps], [0, 1], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+            }),
+            fontSize: 32,
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.4)",
+          }}
+        >
+          ⏱️ カンタン4ステップ
+        </div>
+      </AbsoluteFill>
+
+      {/* Flash on slam */}
+      <AbsoluteFill
         style={{
-          opacity: timerOpacity,
-          fontSize: 36,
-          fontWeight: 700,
-          color: "rgba(255,255,255,0.5)",
+          background: "white",
+          opacity: interpolate(frame, [0, 3, 10], [0.7, 0.5, 0], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          }),
+          pointerEvents: "none",
         }}
-      >
-        ⏱️ カンタン4ステップ
-      </div>
+      />
     </AbsoluteFill>
   );
 };
 
-// --- Scene: Interactive Tutorial Step ---
+// ═══════════════════════════════════════════
+// Tutorial Step — cinematic interactive demo
+// ═══════════════════════════════════════════
 const TutorialStepScene: React.FC<{
   stepNumber: number;
   totalSteps: number;
@@ -167,383 +250,391 @@ const TutorialStepScene: React.FC<{
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Step badge pops in
-  const badgeScale = interpolate(frame, [0, 8], [0, 1.15], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
-  });
-  const badgeSettle = interpolate(frame, [8, 14], [1.15, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  // Content slides up
-  const contentOpacity = interpolate(frame, [6, 14], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const contentY = interpolate(frame, [6, 16], [40, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
-  });
-
-  // Visual demo area
-  const visualOpacity = interpolate(frame, [12, 22], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const visualScale = interpolate(frame, [12, 22], [0.85, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
-  });
-
-  const dots = Array.from({ length: totalSteps }, (_, i) => i);
-
-  // Color based on step
   const stepColors = [secondaryColor, highlightColor, goldColor, accentColor];
   const stepColor = stepColors[(stepNumber - 1) % stepColors.length];
 
+  const badgePop = interpolate(frame, [0, 10], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.34, 1.56, 0.64, 1),
+  });
+
+  const contentFade = interpolate(frame, [6, 14], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  const visualFade = interpolate(frame, [12, 20], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  const dots = Array.from({ length: totalSteps }, (_, i) => i);
+  const driftScale = interpolate(frame, [0, 2.5 * fps], [1, 1.015], { extrapolateRight: "clamp" });
+
   return (
-    <AbsoluteFill
-      style={{
-        background: `linear-gradient(180deg, #1a1a2e, ${accentColor}22)`,
-        fontFamily,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "100px 60px 120px",
-        gap: 24,
-      }}
-    >
-      {/* Step badge */}
-      <div
-        style={{
-          scale: String(frame < 8 ? badgeScale : badgeSettle),
-          width: 90,
-          height: 90,
-          borderRadius: "50%",
-          background: `linear-gradient(135deg, ${stepColor}, ${accentColor})`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 48,
-          fontWeight: 900,
-          color: "white",
-          boxShadow: `0 6px 30px ${stepColor}66`,
-        }}
-      >
-        {stepNumber}
-      </div>
+    <AbsoluteFill style={{ background: BG_GAME, fontFamily, scale: String(driftScale) }}>
+      <FloatingParticles frame={frame} count={15} color={`${stepColor}15`} />
 
-      {/* Title */}
-      <div
+      <AbsoluteFill
         style={{
-          opacity: contentOpacity,
-          translate: `0px ${contentY}px`,
-          fontSize: 64,
-          fontWeight: 900,
-          color: "white",
-          textAlign: "center",
-        }}
-      >
-        {title}
-      </div>
-
-      {/* Visual demo area */}
-      <div
-        style={{
-          opacity: visualOpacity,
-          scale: String(visualScale),
-          width: "90%",
-          flex: 1,
-          borderRadius: 28,
-          background: "rgba(255,255,255,0.04)",
-          border: `2px solid ${stepColor}33`,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          gap: 24,
-          padding: 40,
-          overflow: "hidden",
+          padding: "100px 60px 120px",
+          gap: 20,
         }}
       >
-        {/* Big emoji */}
-        <div style={{ fontSize: 100 }}>{emoji}</div>
+        {/* Step badge */}
+        <div
+          style={{
+            scale: String(badgePop),
+            width: 80,
+            height: 80,
+            borderRadius: "50%",
+            background: `linear-gradient(135deg, ${stepColor}, ${accentColor})`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 44,
+            fontWeight: 900,
+            color: "white",
+            boxShadow: `0 6px 30px ${stepColor}55`,
+          }}
+        >
+          {stepNumber}
+        </div>
 
-        {/* Visual content based on step type */}
-        {visual === "grade-select" && (
-          <div style={{ display: "flex", gap: 20 }}>
-            {[
-              { g: "5級", c: "#00d9ff" },
-              { g: "4級", c: "#ffd93d" },
-              { g: "3級", c: "#ff6b9d" },
-            ].map((grade, i) => {
-              const gDelay = 16 + i * 6;
-              const gScale = interpolate(frame, [gDelay, gDelay + 8], [0.8, 1], {
+        {/* Title */}
+        <div
+          style={{
+            opacity: contentFade,
+            translate: `0px ${interpolate(frame, [6, 14], [20, 0], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+              easing: Easing.bezier(0.16, 1, 0.3, 1),
+            })}px`,
+            fontSize: 60,
+            fontWeight: 900,
+            color: "white",
+            textAlign: "center",
+            textShadow: "0 4px 20px rgba(0,0,0,0.5)",
+          }}
+        >
+          {title}
+        </div>
+
+        {/* Visual demo panel */}
+        <div
+          style={{
+            opacity: visualFade,
+            scale: String(
+              interpolate(frame, [12, 22], [0.9, 1], {
                 extrapolateLeft: "clamp",
                 extrapolateRight: "clamp",
-                easing: Easing.bezier(0.16, 1, 0.3, 1),
-              });
-              const gOpacity = interpolate(frame, [gDelay, gDelay + 6], [0, 1], {
-                extrapolateLeft: "clamp",
-                extrapolateRight: "clamp",
-              });
-              // Highlight 5級 as selected
-              const isSelected = i === 0 && frame > 40;
+                easing: Easing.bezier(0.34, 1.56, 0.64, 1),
+              })
+            ),
+            width: "88%",
+            flex: 1,
+            borderRadius: 28,
+            background: PANEL_BG,
+            border: `1px solid ${stepColor}33`,
+            boxShadow: `0 10px 40px rgba(0,0,0,0.3)`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 20,
+            padding: 36,
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ fontSize: 88 }}>{emoji}</div>
 
-              return (
-                <div
-                  key={i}
-                  style={{
-                    opacity: gOpacity,
-                    scale: String(gScale),
-                    width: 200,
-                    padding: "28px 16px",
-                    borderRadius: 20,
-                    background: isSelected ? `${grade.c}33` : "rgba(255,255,255,0.06)",
-                    border: `3px solid ${isSelected ? grade.c : "rgba(255,255,255,0.15)"}`,
-                    textAlign: "center",
-                    fontSize: 44,
-                    fontWeight: 900,
-                    color: grade.c,
-                  }}
-                >
-                  {grade.g}
-                  {isSelected && (
-                    <div style={{ fontSize: 28, marginTop: 8, color: "white" }}>
-                      ✓ 選択中
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {visual === "quiz-answer" && (
-          <div style={{ width: "100%", textAlign: "center" }}>
-            <div style={{ fontSize: 44, fontWeight: 900, color: "white", marginBottom: 20 }}>
-              🍎「りんご」は英語で？
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center" }}>
-              {["apple", "orange", "banana", "grape"].map((opt, i) => {
-                const tapped = i === 0 && frame > 40;
+          {/* Grade select visual */}
+          {visual === "grade-select" && (
+            <div style={{ display: "flex", gap: 16 }}>
+              {[
+                { g: "5級", c: "#00d9ff" },
+                { g: "4級", c: "#ffd93d" },
+                { g: "3級", c: "#ff6b9d" },
+              ].map((grade, i) => {
+                const gDelay = 16 + i * 5;
+                const isSelected = i === 0 && frame > 38;
                 return (
                   <div
                     key={i}
                     style={{
-                      width: "44%",
-                      padding: "20px",
-                      borderRadius: 16,
-                      background: tapped ? `${secondaryColor}44` : "rgba(255,255,255,0.08)",
-                      border: `3px solid ${tapped ? secondaryColor : "rgba(255,255,255,0.15)"}`,
-                      fontSize: 36,
-                      fontWeight: 700,
-                      color: "white",
-                    }}
-                  >
-                    {opt} {tapped && "✓"}
-                  </div>
-                );
-              })}
-            </div>
-            {frame > 40 && (
-              <div
-                style={{
-                  fontSize: 40,
-                  fontWeight: 900,
-                  color: secondaryColor,
-                  marginTop: 20,
-                  opacity: interpolate(frame, [40, 48], [0, 1], {
-                    extrapolateLeft: "clamp",
-                    extrapolateRight: "clamp",
-                  }),
-                }}
-              >
-                正解！
-              </div>
-            )}
-          </div>
-        )}
-
-        {visual === "combo-chain" && (
-          <div style={{ textAlign: "center" }}>
-            <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 20 }}>
-              {[1, 2, 3, 4, 5].map((n) => {
-                const cDelay = 14 + n * 5;
-                const cOpacity = interpolate(frame, [cDelay, cDelay + 4], [0, 1], {
-                  extrapolateLeft: "clamp",
-                  extrapolateRight: "clamp",
-                });
-                const cScale = interpolate(frame, [cDelay, cDelay + 6], [1.5, 1], {
-                  extrapolateLeft: "clamp",
-                  extrapolateRight: "clamp",
-                  easing: Easing.bezier(0.16, 1, 0.3, 1),
-                });
-
-                return (
-                  <div
-                    key={n}
-                    style={{
-                      opacity: cOpacity,
-                      scale: String(cScale),
-                      width: 70,
-                      height: 70,
-                      borderRadius: "50%",
-                      background: n >= 3 ? `${goldColor}44` : `${secondaryColor}33`,
-                      border: `3px solid ${n >= 3 ? goldColor : secondaryColor}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 32,
+                      opacity: interpolate(frame, [gDelay, gDelay + 6], [0, 1], {
+                        extrapolateLeft: "clamp",
+                        extrapolateRight: "clamp",
+                      }),
+                      scale: String(
+                        interpolate(frame, [gDelay, gDelay + 8], [0.8, 1], {
+                          extrapolateLeft: "clamp",
+                          extrapolateRight: "clamp",
+                          easing: Easing.bezier(0.34, 1.56, 0.64, 1),
+                        })
+                      ),
+                      width: 185,
+                      padding: "24px 12px",
+                      borderRadius: 18,
+                      background: isSelected ? `${grade.c}22` : "rgba(255,255,255,0.04)",
+                      border: `3px solid ${isSelected ? grade.c : "rgba(255,255,255,0.1)"}`,
+                      boxShadow: isSelected ? `0 0 20px ${grade.c}33` : "none",
+                      textAlign: "center",
+                      fontSize: 40,
                       fontWeight: 900,
-                      color: "white",
+                      color: grade.c,
                     }}
                   >
-                    {n}
+                    {grade.g}
+                    {isSelected && (
+                      <div style={{ fontSize: 24, marginTop: 6, color: "white" }}>✓ 選択中</div>
+                    )}
                   </div>
                 );
               })}
             </div>
-            {frame > 40 && (
+          )}
+
+          {/* Quiz answer visual */}
+          {visual === "quiz-answer" && (
+            <div style={{ width: "100%", textAlign: "center" }}>
+              <div style={{ fontSize: 40, fontWeight: 900, color: "white", marginBottom: 16 }}>
+                🍎「りんご」は英語で？
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
+                {["apple", "orange", "banana", "grape"].map((opt, i) => {
+                  const tapped = i === 0 && frame > 38;
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        width: "44%",
+                        padding: "18px",
+                        borderRadius: 14,
+                        background: tapped ? `${secondaryColor}33` : "rgba(255,255,255,0.04)",
+                        border: `3px solid ${tapped ? secondaryColor : "rgba(255,255,255,0.1)"}`,
+                        boxShadow: tapped ? `0 0 20px ${secondaryColor}33` : "none",
+                        fontSize: 34,
+                        fontWeight: 700,
+                        color: "white",
+                        scale: String(
+                          tapped
+                            ? interpolate(frame, [38, 44], [1, 1.05], {
+                                extrapolateLeft: "clamp",
+                                extrapolateRight: "clamp",
+                                easing: Easing.bezier(0.34, 1.56, 0.64, 1),
+                              })
+                            : 1
+                        ),
+                      }}
+                    >
+                      {opt} {tapped && <span style={{ color: secondaryColor }}>✓</span>}
+                    </div>
+                  );
+                })}
+              </div>
+              {frame > 38 && (
+                <div
+                  style={{
+                    marginTop: 16,
+                    opacity: interpolate(frame, [38, 44], [0, 1], {
+                      extrapolateLeft: "clamp",
+                      extrapolateRight: "clamp",
+                    }),
+                    scale: String(
+                      interpolate(frame, [38, 46], [2, 1], {
+                        extrapolateLeft: "clamp",
+                        extrapolateRight: "clamp",
+                        easing: Easing.bezier(0.16, 1, 0.3, 1),
+                      })
+                    ),
+                  }}
+                >
+                  <GradientText from={secondaryColor} to={goldColor} fontSize={40}>
+                    正解！
+                  </GradientText>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Combo chain visual */}
+          {visual === "combo-chain" && (
+            <div style={{ textAlign: "center" }}>
+              <div style={{ display: "flex", gap: 14, justifyContent: "center", marginBottom: 16 }}>
+                {[1, 2, 3, 4, 5].map((n) => {
+                  const cDelay = 14 + n * 4;
+                  return (
+                    <div
+                      key={n}
+                      style={{
+                        opacity: interpolate(frame, [cDelay, cDelay + 4], [0, 1], {
+                          extrapolateLeft: "clamp",
+                          extrapolateRight: "clamp",
+                        }),
+                        scale: String(
+                          interpolate(frame, [cDelay, cDelay + 6], [1.8, 1], {
+                            extrapolateLeft: "clamp",
+                            extrapolateRight: "clamp",
+                            easing: Easing.bezier(0.16, 1, 0.3, 1),
+                          })
+                        ),
+                        width: 60,
+                        height: 60,
+                        borderRadius: "50%",
+                        background: n >= 3 ? `${goldColor}33` : `${secondaryColor}22`,
+                        border: `3px solid ${n >= 3 ? goldColor : secondaryColor}`,
+                        boxShadow: n >= 3 ? `0 0 15px ${goldColor}44` : "none",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 28,
+                        fontWeight: 900,
+                        color: "white",
+                      }}
+                    >
+                      {n}
+                    </div>
+                  );
+                })}
+              </div>
+              {frame > 38 && (
+                <div
+                  style={{
+                    opacity: interpolate(frame, [38, 44], [0, 1], {
+                      extrapolateLeft: "clamp",
+                      extrapolateRight: "clamp",
+                    }),
+                    scale: String(
+                      interpolate(frame, [38, 48], [2.5, 1], {
+                        extrapolateLeft: "clamp",
+                        extrapolateRight: "clamp",
+                        easing: Easing.bezier(0.16, 1, 0.3, 1),
+                      })
+                    ),
+                  }}
+                >
+                  <GradientText from={goldColor} to={highlightColor} fontSize={48}>
+                    5x COMBO! GREAT!
+                  </GradientText>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Level up visual */}
+          {visual === "level-up" && (
+            <div style={{ textAlign: "center", width: "100%" }}>
               <div
                 style={{
-                  fontSize: 56,
-                  fontWeight: 900,
-                  color: goldColor,
-                  textShadow: `0 0 30px ${goldColor}66`,
-                  opacity: interpolate(frame, [40, 48], [0, 1], {
-                    extrapolateLeft: "clamp",
-                    extrapolateRight: "clamp",
-                  }),
-                  scale: String(interpolate(frame, [40, 50], [2, 1], {
-                    extrapolateLeft: "clamp",
-                    extrapolateRight: "clamp",
-                    easing: Easing.bezier(0.16, 1, 0.3, 1),
-                  })),
+                  width: "85%",
+                  height: 18,
+                  borderRadius: 9,
+                  background: "rgba(255,255,255,0.08)",
+                  overflow: "hidden",
+                  margin: "0 auto 20px",
                 }}
               >
-                5x COMBO! GREAT!
+                <div
+                  style={{
+                    width: `${interpolate(frame, [14, 40], [60, 100], {
+                      extrapolateLeft: "clamp",
+                      extrapolateRight: "clamp",
+                    })}%`,
+                    height: "100%",
+                    borderRadius: 9,
+                    background: `linear-gradient(90deg, ${secondaryColor}, ${goldColor})`,
+                    boxShadow: `0 0 15px ${goldColor}44`,
+                  }}
+                />
               </div>
-            )}
-          </div>
-        )}
-
-        {visual === "level-up" && (
-          <div style={{ textAlign: "center" }}>
-            {/* XP bar */}
-            <div
-              style={{
-                width: 600,
-                height: 20,
-                borderRadius: 10,
-                background: "rgba(255,255,255,0.1)",
-                overflow: "hidden",
-                marginBottom: 24,
-              }}
-            >
-              <div
-                style={{
-                  width: `${interpolate(frame, [14, 45], [60, 100], {
-                    extrapolateLeft: "clamp",
-                    extrapolateRight: "clamp",
-                  })}%`,
-                  height: "100%",
-                  borderRadius: 10,
-                  background: `linear-gradient(90deg, ${secondaryColor}, ${goldColor})`,
-                }}
-              />
+              {frame > 40 && (
+                <>
+                  <div
+                    style={{
+                      opacity: interpolate(frame, [40, 46], [0, 1], {
+                        extrapolateLeft: "clamp",
+                        extrapolateRight: "clamp",
+                      }),
+                      scale: String(
+                        interpolate(frame, [40, 50], [2.5, 1], {
+                          extrapolateLeft: "clamp",
+                          extrapolateRight: "clamp",
+                          easing: Easing.bezier(0.16, 1, 0.3, 1),
+                        })
+                      ),
+                    }}
+                  >
+                    <GradientText from={secondaryColor} to={goldColor} fontSize={64}>
+                      LEVEL UP!
+                    </GradientText>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 32,
+                      fontWeight: 700,
+                      color: "rgba(255,255,255,0.6)",
+                      marginTop: 10,
+                      opacity: interpolate(frame, [46, 52], [0, 1], {
+                        extrapolateLeft: "clamp",
+                        extrapolateRight: "clamp",
+                      }),
+                    }}
+                  >
+                    Lv.4 → Lv.5 🎉
+                  </div>
+                </>
+              )}
             </div>
-            {frame > 45 && (
-              <>
-                <div
-                  style={{
-                    fontSize: 72,
-                    fontWeight: 900,
-                    color: goldColor,
-                    textShadow: `0 0 40px ${goldColor}66`,
-                    opacity: interpolate(frame, [45, 52], [0, 1], {
-                      extrapolateLeft: "clamp",
-                      extrapolateRight: "clamp",
-                    }),
-                    scale: String(interpolate(frame, [45, 55], [2, 1], {
-                      extrapolateLeft: "clamp",
-                      extrapolateRight: "clamp",
-                      easing: Easing.bezier(0.16, 1, 0.3, 1),
-                    })),
-                  }}
-                >
-                  LEVEL UP!
-                </div>
-                <div
-                  style={{
-                    fontSize: 36,
-                    fontWeight: 700,
-                    color: "rgba(255,255,255,0.7)",
-                    marginTop: 12,
-                    opacity: interpolate(frame, [50, 58], [0, 1], {
-                      extrapolateLeft: "clamp",
-                      extrapolateRight: "clamp",
-                    }),
-                  }}
-                >
-                  Lv.4 → Lv.5 🎉
-                </div>
-              </>
-            )}
-          </div>
-        )}
+          )}
 
-        {/* Description text */}
-        <div
-          style={{
-            fontSize: 32,
-            fontWeight: 700,
-            color: "rgba(255,255,255,0.6)",
-            textAlign: "center",
-            whiteSpace: "pre-line",
-            lineHeight: 1.5,
-          }}
-        >
-          {description}
-        </div>
-      </div>
-
-      {/* Progress dots */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 60,
-          display: "flex",
-          gap: 14,
-        }}
-      >
-        {dots.map((d) => (
+          {/* Description */}
           <div
-            key={d}
             style={{
-              width: d === stepNumber - 1 ? 36 : 14,
-              height: 14,
-              borderRadius: 7,
-              background:
-                d === stepNumber - 1
-                  ? stepColor
-                  : d < stepNumber - 1
-                    ? `${stepColor}66`
-                    : "rgba(255,255,255,0.2)",
+              fontSize: 28,
+              fontWeight: 700,
+              color: "rgba(255,255,255,0.5)",
+              textAlign: "center",
+              whiteSpace: "pre-line",
+              lineHeight: 1.5,
             }}
-          />
-        ))}
-      </div>
+          >
+            {description}
+          </div>
+        </div>
+
+        {/* Progress dots */}
+        <div style={{ position: "absolute", bottom: 60, display: "flex", gap: 12 }}>
+          {dots.map((d) => (
+            <div
+              key={d}
+              style={{
+                width: d === stepNumber - 1 ? 32 : 12,
+                height: 12,
+                borderRadius: 6,
+                background:
+                  d === stepNumber - 1
+                    ? stepColor
+                    : d < stepNumber - 1
+                      ? `${stepColor}55`
+                      : "rgba(255,255,255,0.15)",
+                boxShadow: d === stepNumber - 1 ? `0 0 10px ${stepColor}44` : "none",
+              }}
+            />
+          ))}
+        </div>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };
 
-// --- Scene: Outro ---
+// ═══════════════════════════════════════════
+// Outro
+// ═══════════════════════════════════════════
 const TutorialOutroScene: React.FC<{
   gameNameJa: string;
   accentColor: string;
@@ -554,122 +645,112 @@ const TutorialOutroScene: React.FC<{
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const contentOpacity = interpolate(frame, [0, 0.4 * fps], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  const titleScale = interpolate(frame, [0, 0.4 * fps], [0.8, 1], {
+  const revealProgress = interpolate(frame, [0, 0.4 * fps], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
 
-  const buttonScale = interpolate(frame, [0.4 * fps, 0.6 * fps], [0, 1], {
+  const buttonPop = interpolate(frame, [0.4 * fps, 0.6 * fps], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
+    easing: Easing.bezier(0.34, 1.56, 0.64, 1),
   });
 
-  const pulse = Math.sin(frame * 0.15) * 0.04 + 1;
-
-  // Mascot bounce
-  const mascotY = Math.sin(frame * 0.2) * 8;
+  const pulse = Math.sin(frame * 0.15) * 0.03 + 1;
+  const mascotY = Math.sin(frame * 0.2) * 6;
 
   return (
-    <AbsoluteFill
-      style={{
-        background: `linear-gradient(135deg, ${accentColor}, #1a1a2e, ${highlightColor}55)`,
-        fontFamily,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 36,
-      }}
-    >
-      {/* Glow */}
-      <div
-        style={{
-          position: "absolute",
-          width: 500,
-          height: 500,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${goldColor}15, transparent)`,
-        }}
-      />
+    <AbsoluteFill style={{ background: BG_RESULT, fontFamily }}>
+      <FloatingParticles frame={frame} count={25} color="rgba(196,78,255,0.12)" />
 
-      {/* Mascot */}
-      <div
+      {/* Glow rings */}
+      {[350, 550].map((size, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            left: 540 - size / 2,
+            top: 960 - size / 2,
+            width: size,
+            height: size,
+            borderRadius: "50%",
+            border: `1px solid ${[goldColor, secondaryColor][i]}15`,
+            scale: String(1 + Math.sin(frame * 0.08 + i * 2) * 0.04),
+          }}
+        />
+      ))}
+
+      <AbsoluteFill
         style={{
-          opacity: contentOpacity,
-          translate: `0px ${mascotY}px`,
-          fontSize: 80,
-          lineHeight: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 28,
         }}
       >
-        (★‿★)
-      </div>
-
-      {/* Ready message */}
-      <div
-        style={{
-          opacity: contentOpacity,
-          scale: String(titleScale),
-          textAlign: "center",
-        }}
-      >
-        <div style={{ fontSize: 68, fontWeight: 900, color: "white" }}>
-          カンタンでしょ？
-        </div>
+        {/* Mascot */}
         <div
           style={{
-            fontSize: 44,
-            fontWeight: 700,
-            color: secondaryColor,
-            marginTop: 12,
+            opacity: revealProgress,
+            translate: `0px ${mascotY}px`,
+            fontSize: 72,
+            lineHeight: 1,
           }}
         >
-          {gameNameJa}で冒険しよう！
+          (★‿★)
         </div>
-      </div>
 
-      {/* Tagline */}
-      <div
-        style={{
-          opacity: contentOpacity,
-          fontSize: 40,
-          fontWeight: 900,
-          color: goldColor,
-          textShadow: `0 0 20px ${goldColor}44`,
-        }}
-      >
-        遊んでたら、受かってた。
-      </div>
+        <div style={{ opacity: revealProgress, textAlign: "center" }}>
+          <div style={{ fontSize: 64, fontWeight: 900, color: "white", textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+            カンタンでしょ？
+          </div>
+          <div style={{ fontSize: 40, fontWeight: 700, color: secondaryColor, marginTop: 10 }}>
+            {gameNameJa}で冒険しよう！
+          </div>
+        </div>
 
-      {/* CTA button */}
-      <div
-        style={{
-          scale: String(buttonScale * pulse),
-          padding: "28px 72px",
-          borderRadius: 100,
-          background: `linear-gradient(135deg, ${highlightColor}, ${accentColor})`,
-          fontSize: 48,
-          fontWeight: 900,
-          color: "white",
-          boxShadow: `0 8px 40px ${highlightColor}66`,
-        }}
-      >
-        今すぐ遊んでみよう！
-      </div>
+        <div
+          style={{
+            opacity: interpolate(frame, [0.3 * fps, 0.5 * fps], [0, 1], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+            }),
+            fontSize: 44,
+            fontWeight: 900,
+            color: goldColor,
+            textShadow: `0 0 25px ${goldColor}44`,
+          }}
+        >
+          遊んでたら、受かってた。
+        </div>
+
+        <div
+          style={{
+            scale: String(buttonPop * pulse),
+            padding: "28px 68px",
+            borderRadius: 100,
+            background: `linear-gradient(135deg, ${highlightColor}, ${accentColor})`,
+            fontSize: 44,
+            fontWeight: 900,
+            color: "white",
+            boxShadow: `0 10px 50px ${highlightColor}55, 0 4px 15px rgba(0,0,0,0.3)`,
+          }}
+        >
+          今すぐ遊んでみよう！
+        </div>
+      </AbsoluteFill>
 
       <div
         style={{
           position: "absolute",
           bottom: 50,
-          fontSize: 28,
+          width: "100%",
+          textAlign: "center",
+          fontSize: 26,
           fontWeight: 700,
-          color: "rgba(255,255,255,0.3)",
+          color: "rgba(255,255,255,0.25)",
         }}
       >
         WISE English Club
@@ -678,11 +759,13 @@ const TutorialOutroScene: React.FC<{
   );
 };
 
-// --- Main Composition ---
+// ═══════════════════════════════════════════
+// Main Composition — with light leak overlays
+// ═══════════════════════════════════════════
 export const GameTutorialVideo: React.FC<TutorialProps> = (props) => {
   return (
     <TransitionSeries>
-      {/* Hook Intro (2s) */}
+      {/* Hook (2s) */}
       <TransitionSeries.Sequence durationInFrames={60}>
         <TutorialHookScene
           gameNameJa={props.gameNameJa}
@@ -692,13 +775,19 @@ export const GameTutorialVideo: React.FC<TutorialProps> = (props) => {
         />
       </TransitionSeries.Sequence>
 
-      {/* 4 Tutorial Steps (2.5s each) */}
+      {/* Steps with light leak overlays between them */}
       {props.steps.map((step, i) => (
         <React.Fragment key={i}>
-          <TransitionSeries.Transition
-            presentation={slide({ direction: "from-right" })}
-            timing={linearTiming({ durationInFrames: 8 })}
-          />
+          {i === 0 ? (
+            <TransitionSeries.Overlay durationInFrames={18}>
+              <LightLeak seed={i + 1} hueShift={270} />
+            </TransitionSeries.Overlay>
+          ) : (
+            <TransitionSeries.Transition
+              presentation={slide({ direction: "from-right" })}
+              timing={linearTiming({ durationInFrames: 8 })}
+            />
+          )}
           <TransitionSeries.Sequence durationInFrames={75}>
             <TutorialStepScene
               stepNumber={i + 1}
@@ -716,11 +805,11 @@ export const GameTutorialVideo: React.FC<TutorialProps> = (props) => {
         </React.Fragment>
       ))}
 
-      {/* Outro (2.5s) */}
-      <TransitionSeries.Transition
-        presentation={fade()}
-        timing={linearTiming({ durationInFrames: 10 })}
-      />
+      {/* Outro with light leak */}
+      <TransitionSeries.Overlay durationInFrames={20}>
+        <LightLeak seed={5} hueShift={300} />
+      </TransitionSeries.Overlay>
+
       <TransitionSeries.Sequence durationInFrames={75}>
         <TutorialOutroScene
           gameNameJa={props.gameNameJa}

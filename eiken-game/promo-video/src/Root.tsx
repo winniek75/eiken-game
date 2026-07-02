@@ -3,8 +3,8 @@ import { Composition } from "remotion";
 import { GamePromoVideo, GamePromoSchema } from "./GamePromoVideo";
 import { GameTutorialVideo, GameTutorialSchema } from "./GameTutorialVideo";
 
-// Total promo: 45+90+75+75+60 - (4+8+8+8) = 317 frames @ 30fps = ~10.5s
-// Total tutorial: 60 + 75*4 + 75 - (8*4+10) = 393 frames @ 30fps = ~13s
+// Promo: 45+90+75+75+60 = 345 frames (overlays don't shorten, fade -10) = 335 @ 30fps ~11s
+// Tutorial: 60+75*4+75 = 435 (overlay+3 slides = -18-8*3) = 393 @ 30fps ~13s
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -13,7 +13,7 @@ export const RemotionRoot: React.FC = () => {
         id="GamePromo"
         component={GamePromoVideo}
         schema={GamePromoSchema}
-        durationInFrames={317}
+        durationInFrames={335}
         fps={30}
         width={1080}
         height={1920}
