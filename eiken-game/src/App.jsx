@@ -1426,7 +1426,8 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
 
 // ======== リザルト画面 ========
 const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表',xpEarned=0,saveData})=>{
-  const[sd,setSd]=useState(false);const inh=result.score>highScore;const acc=Math.round((result.correctCount/result.totalQuestions)*100);
+  const[sd,setSd]=useState(false);
+  useEffect(()=>{reportToMoWISE(result,grade,title);},[]);  // eslint-disable-lineconst inh=result.score>highScore;const acc=Math.round((result.correctCount/result.totalQuestions)*100);
   const getRank=()=>{if(acc>=90)return{rank:'S',color:'#ffd93d',msg:'素晴らしい！完璧に近い！'};if(acc>=70)return{rank:'A',color:'#6bff8e',msg:'すごい！よくできました！'};if(acc>=50)return{rank:'B',color:'#00d9ff',msg:'がんばりました！'};if(acc>=30)return{rank:'C',color:'#c44eff',msg:'もう少し練習しよう！'};return{rank:'D',color:'#ff6b6b',msg:'次はもっとがんばろう！'};};
   const{rank,color,msg}=getRank();
   useEffect(()=>{const t=setTimeout(()=>setSd(true),500);return()=>clearTimeout(t);},[]);
@@ -1991,6 +1992,22 @@ const reportToXP = (result, grade) => {
       grade: String(grade)
     }).catch(() => {});
   }
+};
+// → MoWISE portal へスコア送信 (WiseGame Bridge)
+const reportToMoWISE = (result, grade, mode) => {
+  try {
+    if (typeof window === 'undefined' || !window.WiseGame) return;
+    const acc = result.totalQuestions > 0
+      ? Math.round((result.correctCount / result.totalQuestions) * 100) : 0;
+    window.WiseGame.reportComplete({
+      score: result.score,
+      maxScore: Math.max(result.score, result.totalQuestions * 10),
+      accuracy: acc,
+      metadata: { grade: String(grade), mode: mode || 'quiz',
+                  maxCombo: result.maxCombo, correct: result.correctCount,
+                  total: result.totalQuestions }
+    });
+  } catch (e) {}
 };
 const reportWrongToXP = (q) => {
   if (typeof window !== 'undefined' && window.WiseXP && window.WiseXP.isInitialized()) {
