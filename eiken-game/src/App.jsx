@@ -1994,18 +1994,22 @@ const reportToXP = (result, grade) => {
   }
 };
 // → MoWISE portal へスコア送信 (WiseGame Bridge)
-const reportToMoWISE = (result, grade, mode) => {
+const reportToMoWISE = (result, grade, mode, wrongList) => {
   try {
     if (typeof window === 'undefined' || !window.WiseGame) return;
     const acc = result.totalQuestions > 0
       ? Math.round((result.correctCount / result.totalQuestions) * 100) : 0;
+    const wa = (wrongList || []).slice(0, 20).map(q => ({
+      q: q.question || '', correct: q.correctAnswer || q.answer || '',
+      chosen: q.playerAnswer || '', tag: 'vocab_eiken' + (grade || '5')
+    }));
     window.WiseGame.reportComplete({
       score: result.score,
       maxScore: Math.max(result.score, result.totalQuestions * 10),
       accuracy: acc,
       metadata: { grade: String(grade), mode: mode || 'quiz',
                   maxCombo: result.maxCombo, correct: result.correctCount,
-                  total: result.totalQuestions }
+                  total: result.totalQuestions, wrongAnswers: wa }
     });
   } catch (e) {}
 };
@@ -2093,6 +2097,7 @@ export default function App(){
 
     // Report to shared XP system
     reportToXP(r, sg);
+    reportToMoWISE(r, sg, gameMode, wrongThisGame);
 
     if (newLevel > prevLevel) {
       setShowLevelUp(true);
