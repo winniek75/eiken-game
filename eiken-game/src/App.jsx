@@ -65,13 +65,21 @@ const addWrongQuestions = (history, questions) => {
   for (const q of questions) {
     const exists = newHistory.findIndex(h => h.question === q.question);
     if (exists >= 0) {
-      newHistory[exists].wrongCount = (newHistory[exists].wrongCount || 1) + 1;
-      newHistory[exists].lastWrong = Date.now();
+      // wrongCount = まちがい＋時間切れの合計、timeoutCount = そのうち時間切れの回数
+      newHistory[exists] = { ...newHistory[exists], wrongCount: (newHistory[exists].wrongCount || 1) + 1, timeoutCount: (newHistory[exists].timeoutCount || 0) + (q.timedOut ? 1 : 0), lastWrong: Date.now() };
     } else {
-      newHistory.push({ ...q, wrongCount: 1, lastWrong: Date.now() });
+      const { chosen, timedOut, ...base } = q;
+      newHistory.push({ ...base, wrongCount: 1, timeoutCount: timedOut ? 1 : 0, lastWrong: Date.now() });
     }
   }
   return newHistory.slice(-MAX_WRONG_HISTORY);
+};
+// 復習モードで正解できた問題は、まちがい回数を1つへらす（0になったら復習リストから卒業）
+const clearReviewed = (history, correctQuestions) => {
+  if (!correctQuestions || !correctQuestions.length) return history;
+  return history
+    .map(h => correctQuestions.includes(h.question) ? { ...h, wrongCount: (h.wrongCount || 1) - 1 } : h)
+    .filter(h => h.wrongCount > 0);
 };
 
 // ======== 正解チャイム音 ========
@@ -140,42 +148,42 @@ const grade5Questions = [
   { type: 'vocab', question: '「オレンジ」は英語で？', options: ['apple', 'orange', 'lemon', 'peach'], answer: 1, hint: '🍊' },
   { type: 'vocab', question: '「バナナ」は英語で？', options: ['melon', 'grape', 'banana', 'cherry'], answer: 2, hint: '🍌' },
   { type: 'vocab', question: '「ぶどう」は英語で？', options: ['strawberry', 'peach', 'cherry', 'grape'], answer: 3, hint: '🍇' },
-  { type: 'vocab', question: '「いちご」は英語で？', options: ['strawberry', 'blueberry', 'raspberry', 'blackberry'], answer: 0, hint: '🍓' },
-  { type: 'vocab', question: '「レモン」は英語で？', options: ['lime', 'lemon', 'orange', 'grapefruit'], answer: 1, hint: '🍋' },
-  { type: 'vocab', question: '「すいか」は英語で？', options: ['melon', 'pumpkin', 'watermelon', 'cucumber'], answer: 2, hint: '🍉' },
-  { type: 'vocab', question: '「もも」は英語で？', options: ['plum', 'pear', 'cherry', 'peach'], answer: 3, hint: '🍑' },
+  { type: 'vocab', question: '「いちご」は英語で？', options: ['strawberry', 'banana', 'lemon', 'melon'], answer: 0, hint: '🍓' },
+  { type: 'vocab', question: '「レモン」は英語で？', options: ['apple', 'lemon', 'orange', 'peach'], answer: 1, hint: '🍋' },
+  { type: 'vocab', question: '「すいか」は英語で？', options: ['lemon', 'peach', 'watermelon', 'grape'], answer: 2, hint: '🍉' },
+  { type: 'vocab', question: '「もも」は英語で？', options: ['apple', 'banana', 'cherry', 'peach'], answer: 3, hint: '🍑' },
   { type: 'vocab', question: '「パン」は英語で？', options: ['bread', 'rice', 'noodle', 'cake'], answer: 0, hint: '🍞' },
-  { type: 'vocab', question: '「ご飯」は英語で？', options: ['bread', 'rice', 'pasta', 'cereal'], answer: 1, hint: '🍚' },
+  { type: 'vocab', question: '「ご飯」は英語で？', options: ['bread', 'rice', 'egg', 'milk'], answer: 1, hint: '🍚' },
   { type: 'vocab', question: '「犬」は英語で？', options: ['cat', 'dog', 'bird', 'fish'], answer: 1, hint: '🐕' },
   { type: 'vocab', question: '「猫」は英語で？', options: ['cat', 'dog', 'mouse', 'rabbit'], answer: 0, hint: '🐱' },
   { type: 'vocab', question: '「鳥」は英語で？', options: ['fish', 'frog', 'bird', 'bee'], answer: 2, hint: '🐦' },
   { type: 'vocab', question: '「魚」は英語で？', options: ['bird', 'bear', 'bee', 'fish'], answer: 3, hint: '🐟' },
-  { type: 'vocab', question: '「うさぎ」は英語で？', options: ['rabbit', 'hamster', 'mouse', 'squirrel'], answer: 0, hint: '🐰' },
-  { type: 'vocab', question: '「ねずみ」は英語で？', options: ['rat', 'mouse', 'hamster', 'guinea pig'], answer: 1, hint: '🐭' },
+  { type: 'vocab', question: '「うさぎ」は英語で？', options: ['rabbit', 'horse', 'monkey', 'pig'], answer: 0, hint: '🐰' },
+  { type: 'vocab', question: '「ねずみ」は英語で？', options: ['cat', 'mouse', 'horse', 'cow'], answer: 1, hint: '🐭' },
   { type: 'vocab', question: '「くま」は英語で？', options: ['lion', 'tiger', 'bear', 'wolf'], answer: 2, hint: '🐻' },
   { type: 'vocab', question: '「ライオン」は英語で？', options: ['tiger', 'bear', 'wolf', 'lion'], answer: 3, hint: '🦁' },
-  { type: 'vocab', question: '「ぞう」は英語で？', options: ['elephant', 'giraffe', 'hippo', 'rhino'], answer: 0, hint: '🐘' },
-  { type: 'vocab', question: '「きりん」は英語で？', options: ['zebra', 'giraffe', 'camel', 'deer'], answer: 1, hint: '🦒' },
+  { type: 'vocab', question: '「ぞう」は英語で？', options: ['elephant', 'monkey', 'panda', 'horse'], answer: 0, hint: '🐘' },
+  { type: 'vocab', question: '「きりん」は英語で？', options: ['monkey', 'giraffe', 'panda', 'koala'], answer: 1, hint: '🦒' },
   { type: 'vocab', question: '「本」は英語で？', options: ['pen', 'desk', 'book', 'chair'], answer: 2, hint: '📚' },
   { type: 'vocab', question: '「ペン」は英語で？', options: ['pen', 'pencil', 'eraser', 'ruler'], answer: 0, hint: '🖊️' },
-  { type: 'vocab', question: '「えんぴつ」は英語で？', options: ['pen', 'pencil', 'marker', 'crayon'], answer: 1, hint: '✏️' },
+  { type: 'vocab', question: '「えんぴつ」は英語で？', options: ['pen', 'pencil', 'notebook', 'eraser'], answer: 1, hint: '✏️' },
   { type: 'vocab', question: '「消しゴム」は英語で？', options: ['ruler', 'scissors', 'eraser', 'glue'], answer: 2, hint: '消すもの' },
   { type: 'vocab', question: '「机」は英語で？', options: ['chair', 'bed', 'sofa', 'desk'], answer: 3, hint: '勉強する場所' },
   { type: 'vocab', question: '「いす」は英語で？', options: ['chair', 'table', 'desk', 'bench'], answer: 0, hint: '座るもの' },
-  { type: 'vocab', question: '「かばん」は英語で？', options: ['box', 'bag', 'basket', 'case'], answer: 1, hint: '👜' },
-  { type: 'vocab', question: '「時計」は英語で？', options: ['calendar', 'phone', 'clock', 'watch'], answer: 2, hint: '⏰' },
+  { type: 'vocab', question: '「かばん」は英語で？', options: ['box', 'bag', 'cap', 'cup'], answer: 1, hint: '👜' },
+  { type: 'vocab', question: '「時計」は英語で？', options: ['calendar', 'phone', 'clock', 'camera'], answer: 2, hint: '⏰' },
   { type: 'vocab', question: '「窓」は英語で？', options: ['door', 'wall', 'floor', 'window'], answer: 3, hint: '外が見える' },
   { type: 'vocab', question: '「ドア」は英語で？', options: ['door', 'gate', 'window', 'wall'], answer: 0, hint: '🚪' },
   { type: 'vocab', question: '「学校」は英語で？', options: ['school', 'house', 'park', 'store'], answer: 0, hint: '🏫' },
   { type: 'vocab', question: '「家」は英語で？', options: ['school', 'house', 'hospital', 'hotel'], answer: 1, hint: '🏠' },
   { type: 'vocab', question: '「公園」は英語で？', options: ['pool', 'gym', 'park', 'garden'], answer: 2, hint: '🌳' },
   { type: 'vocab', question: '「病院」は英語で？', options: ['school', 'station', 'store', 'hospital'], answer: 3, hint: '🏥' },
-  { type: 'vocab', question: '「駅」は英語で？', options: ['station', 'airport', 'port', 'stop'], answer: 0, hint: '🚉' },
-  { type: 'vocab', question: '「図書館」は英語で？', options: ['museum', 'library', 'theater', 'gallery'], answer: 1, hint: '📖がたくさん' },
-  { type: 'vocab', question: '「レストラン」は英語で？', options: ['cafe', 'bar', 'restaurant', 'kitchen'], answer: 2, hint: '🍽️' },
-  { type: 'vocab', question: '「スーパー」は英語で？', options: ['shop', 'store', 'mall', 'supermarket'], answer: 3, hint: '🛒' },
-  { type: 'vocab', question: '「映画館」は英語で？', options: ['cinema', 'theater', 'stadium', 'hall'], answer: 0, hint: '🎬' },
-  { type: 'vocab', question: '「プール」は英語で？', options: ['pond', 'pool', 'lake', 'river'], answer: 1, hint: '🏊' },
+  { type: 'vocab', question: '「駅」は英語で？', options: ['station', 'school', 'park', 'hospital'], answer: 0, hint: '🚉' },
+  { type: 'vocab', question: '「図書館」は英語で？', options: ['school', 'library', 'park', 'zoo'], answer: 1, hint: '📖がたくさん' },
+  { type: 'vocab', question: '「レストラン」は英語で？', options: ['school', 'station', 'restaurant', 'library'], answer: 2, hint: '🍽️' },
+  { type: 'vocab', question: '「スーパー」は英語で？', options: ['park', 'station', 'hospital', 'supermarket'], answer: 3, hint: '🛒' },
+  { type: 'vocab', question: '「映画館」は英語で？', options: ['cinema', 'library', 'station', 'hospital'], answer: 0, hint: '🎬' },
+  { type: 'vocab', question: '「プール」は英語で？', options: ['park', 'pool', 'zoo', 'school'], answer: 1, hint: '🏊' },
   { type: 'vocab', question: '「先生」は英語で？', options: ['student', 'teacher', 'doctor', 'nurse'], answer: 1, hint: '👩‍🏫' },
   { type: 'vocab', question: '「生徒」は英語で？', options: ['student', 'teacher', 'parent', 'child'], answer: 0, hint: '学ぶ人' },
   { type: 'vocab', question: '「友達」は英語で？', options: ['family', 'brother', 'friend', 'sister'], answer: 2, hint: '👫' },
@@ -184,18 +192,18 @@ const grade5Questions = [
   { type: 'vocab', question: '「お父さん」は英語で？', options: ['mother', 'father', 'brother', 'uncle'], answer: 1, hint: '👨' },
   { type: 'vocab', question: '「兄・弟」は英語で？', options: ['sister', 'cousin', 'brother', 'uncle'], answer: 2, hint: '男の兄弟' },
   { type: 'vocab', question: '「姉・妹」は英語で？', options: ['brother', 'cousin', 'aunt', 'sister'], answer: 3, hint: '女の兄弟' },
-  { type: 'vocab', question: '「赤ちゃん」は英語で？', options: ['baby', 'child', 'kid', 'teen'], answer: 0, hint: '👶' },
+  { type: 'vocab', question: '「赤ちゃん」は英語で？', options: ['baby', 'father', 'mother', 'brother'], answer: 0, hint: '👶' },
   { type: 'vocab', question: '「おじいさん」は英語で？', options: ['uncle', 'grandfather', 'father', 'brother'], answer: 1, hint: '👴' },
   { type: 'vocab', question: '「赤」は英語で？', options: ['red', 'blue', 'green', 'yellow'], answer: 0, hint: '🔴' },
   { type: 'vocab', question: '「青」は英語で？', options: ['red', 'blue', 'green', 'purple'], answer: 1, hint: '🔵' },
   { type: 'vocab', question: '「緑」は英語で？', options: ['yellow', 'orange', 'green', 'brown'], answer: 2, hint: '🟢' },
-  { type: 'vocab', question: '「黄色」は英語で？', options: ['orange', 'pink', 'gold', 'yellow'], answer: 3, hint: '🟡' },
-  { type: 'vocab', question: '「白」は英語で？', options: ['white', 'black', 'gray', 'silver'], answer: 0, hint: '⚪' },
-  { type: 'vocab', question: '「黒」は英語で？', options: ['white', 'black', 'brown', 'navy'], answer: 1, hint: '⚫' },
-  { type: 'vocab', question: '「ピンク」は英語で？', options: ['purple', 'red', 'pink', 'rose'], answer: 2, hint: '🩷' },
+  { type: 'vocab', question: '「黄色」は英語で？', options: ['orange', 'pink', 'blue', 'yellow'], answer: 3, hint: '🟡' },
+  { type: 'vocab', question: '「白」は英語で？', options: ['white', 'black', 'red', 'green'], answer: 0, hint: '⚪' },
+  { type: 'vocab', question: '「黒」は英語で？', options: ['white', 'black', 'brown', 'blue'], answer: 1, hint: '⚫' },
+  { type: 'vocab', question: '「ピンク」は英語で？', options: ['purple', 'red', 'pink', 'green'], answer: 2, hint: '🩷' },
   { type: 'vocab', question: '「オレンジ色」は英語で？', options: ['red', 'yellow', 'brown', 'orange'], answer: 3, hint: '🟠' },
-  { type: 'vocab', question: '「紫」は英語で？', options: ['purple', 'violet', 'blue', 'pink'], answer: 0, hint: '🟣' },
-  { type: 'vocab', question: '「茶色」は英語で？', options: ['tan', 'brown', 'beige', 'gold'], answer: 1, hint: '🟤' },
+  { type: 'vocab', question: '「紫」は英語で？', options: ['purple', 'yellow', 'blue', 'pink'], answer: 0, hint: '🟣' },
+  { type: 'vocab', question: '「茶色」は英語で？', options: ['white', 'brown', 'green', 'blue'], answer: 1, hint: '🟤' },
   { type: 'vocab', question: '「1」は英語で？', options: ['one', 'two', 'three', 'four'], answer: 0, hint: '☝️' },
   { type: 'vocab', question: '「2」は英語で？', options: ['one', 'two', 'three', 'five'], answer: 1, hint: '✌️' },
   { type: 'vocab', question: '「3」は英語で？', options: ['one', 'two', 'three', 'four'], answer: 2, hint: '☝️+✌️' },
@@ -204,7 +212,7 @@ const grade5Questions = [
   { type: 'vocab', question: '「12」は英語で？', options: ['eleven', 'twelve', 'thirteen', 'ten'], answer: 1, hint: '1ダース' },
   { type: 'vocab', question: '「20」は英語で？', options: ['twelve', 'fifteen', 'twenty', 'thirty'], answer: 2, hint: '10×2' },
   { type: 'vocab', question: '「100」は英語で？', options: ['ten', 'thousand', 'fifty', 'hundred'], answer: 3, hint: '💯' },
-  { type: 'vocab', question: '「0」は英語で？', options: ['zero', 'one', 'none', 'null'], answer: 0, hint: '何もない' },
+  { type: 'vocab', question: '「0」は英語で？', options: ['zero', 'one', 'two', 'ten'], answer: 0, hint: '何もない' },
   { type: 'vocab', question: '「7」は英語で？', options: ['six', 'seven', 'eight', 'nine'], answer: 1, hint: 'ラッキー' },
   { type: 'vocab', question: '「日曜日」は英語で？', options: ['Monday', 'Saturday', 'Sunday', 'Friday'], answer: 2, hint: '☀️の日' },
   { type: 'vocab', question: '「月曜日」は英語で？', options: ['Monday', 'Tuesday', 'Sunday', 'Friday'], answer: 0, hint: '🌙の日' },
@@ -216,16 +224,16 @@ const grade5Questions = [
   { type: 'vocab', question: '「昨日」は英語で？', options: ['today', 'tomorrow', 'yesterday', 'before'], answer: 2, hint: '前の日' },
   { type: 'vocab', question: '「大きい」は英語で？', options: ['small', 'big', 'tall', 'short'], answer: 1, hint: '🐘' },
   { type: 'vocab', question: '「小さい」は英語で？', options: ['small', 'big', 'wide', 'narrow'], answer: 0, hint: '🐜' },
-  { type: 'vocab', question: '「新しい」は英語で？', options: ['old', 'young', 'new', 'fresh'], answer: 2, hint: '✨' },
-  { type: 'vocab', question: '「古い」は英語で？', options: ['new', 'young', 'fresh', 'old'], answer: 3, hint: '昔の' },
-  { type: 'vocab', question: '「熱い・暑い」は英語で？', options: ['hot', 'cold', 'warm', 'cool'], answer: 0, hint: '🔥' },
-  { type: 'vocab', question: '「冷たい・寒い」は英語で？', options: ['hot', 'cold', 'warm', 'cool'], answer: 1, hint: '❄️' },
-  { type: 'vocab', question: '「良い」は英語で？', options: ['bad', 'nice', 'good', 'great'], answer: 2, hint: '👍' },
-  { type: 'vocab', question: '「悪い」は英語で？', options: ['good', 'nice', 'great', 'bad'], answer: 3, hint: '👎' },
+  { type: 'vocab', question: '「新しい」は英語で？', options: ['old', 'young', 'new', 'big'], answer: 2, hint: '✨' },
+  { type: 'vocab', question: '「古い」は英語で？', options: ['new', 'big', 'small', 'old'], answer: 3, hint: '昔の' },
+  { type: 'vocab', question: '「熱い・暑い」は英語で？', options: ['hot', 'cold', 'new', 'old'], answer: 0, hint: '🔥' },
+  { type: 'vocab', question: '「冷たい・寒い」は英語で？', options: ['hot', 'cold', 'big', 'small'], answer: 1, hint: '❄️' },
+  { type: 'vocab', question: '「良い」は英語で？', options: ['bad', 'old', 'good', 'small'], answer: 2, hint: '👍' },
+  { type: 'vocab', question: '「悪い」は英語で？', options: ['good', 'new', 'big', 'bad'], answer: 3, hint: '👎' },
   { type: 'vocab', question: '「食べる」は英語で？', options: ['eat', 'drink', 'cook', 'make'], answer: 0, hint: '🍽️' },
-  { type: 'vocab', question: '「飲む」は英語で？', options: ['eat', 'drink', 'pour', 'swallow'], answer: 1, hint: '🥤' },
-  { type: 'vocab', question: '「走る」は英語で？', options: ['walk', 'jump', 'run', 'skip'], answer: 2, hint: '🏃' },
-  { type: 'vocab', question: '「歩く」は英語で？', options: ['run', 'jump', 'skip', 'walk'], answer: 3, hint: '🚶' },
+  { type: 'vocab', question: '「飲む」は英語で？', options: ['eat', 'drink', 'run', 'read'], answer: 1, hint: '🥤' },
+  { type: 'vocab', question: '「走る」は英語で？', options: ['walk', 'jump', 'run', 'swim'], answer: 2, hint: '🏃' },
+  { type: 'vocab', question: '「歩く」は英語で？', options: ['run', 'jump', 'swim', 'walk'], answer: 3, hint: '🚶' },
   { type: 'vocab', question: '「見る」は英語で？', options: ['see', 'hear', 'smell', 'taste'], answer: 0, hint: '👀' },
   { type: 'vocab', question: '「聞く」は英語で？', options: ['see', 'hear', 'smell', 'touch'], answer: 1, hint: '👂' },
   { type: 'vocab', question: '「読む」は英語で？', options: ['write', 'speak', 'read', 'listen'], answer: 2, hint: '📖' },
@@ -644,6 +652,45 @@ const getIdiomByGrade=(g)=>({5:idiom5Data,4:idiom4Data,3:idiom3Data}[g]||idiom5D
 const shuffleArray=(a)=>{const s=[...a];for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]];}return s;};
 const shuffleOptions=(q)=>{const o=q.options.map((t,i)=>({text:t,isCorrect:i===q.answer}));const s=shuffleArray(o);return{...q,options:s.map(x=>x.text),answer:s.findIndex(x=>x.isCorrect)};};
 const getRandomQuestions=(g,c=10)=>shuffleArray(getQuestionsByGrade(g)).slice(0,c).map(q=>shuffleOptions(q));
+// 問題がどの級のものか（復習モードや古い保存データ用に、問題文から逆引き）
+const gradeOfQuestion=(q)=>{
+  if(q&&[5,4,3].includes(q.grade))return q.grade;
+  for(const g of [5,4,3]){if(getQuestionsByGrade(g).some(x=>x.question===q?.question))return g;}
+  return null;
+};
+// 問題文に英語の見出し語（「opportunity」や "in terms of"）が入っていれば取り出す
+const englishInQuestion=(q)=>{const m=(q?.question||'').match(/[「"“]([A-Za-z][A-Za-z '’.,!?-]*)[」"”]/);return m?m[1]:null;};
+const isEnglishText=(t)=>/^[A-Za-z][A-Za-z '’.,!?-]*$/.test(t||'');
+
+// ======== ポータル連携 ========
+const PORTAL_URL='https://wise-english-portal.vercel.app';
+const TIMEOUT_LABEL='（時間切れ）';
+const MODE_INFO={
+  practice:{label:'まなぶ・れんしゅう',short:'れんしゅう'},
+  normal:{label:'かくにんテスト',short:'かくにん'},
+  timeattack:{label:'タイムアタック',short:'タイムアタック'},
+  survival:{label:'サバイバル',short:'サバイバル'},
+};
+const DEFAULT_COUNT=10;
+// URLパラメータによる直接起動: ?grade=5|4|3 &mode=practice|normal|timeattack|survival|idiom|idiomtest|dobble &count=5〜30
+const parseDeepLink=()=>{
+  try{
+    const p=new URLSearchParams(window.location.search);
+    const g=parseInt(p.get('grade')||p.get('level')||'',10);
+    const grade=[5,4,3].includes(g)?g:null;
+    const alias={practice:'practice',learn:'practice',manabu:'practice',normal:'normal',check:'normal',quiz:'normal',timeattack:'timeattack',survival:'survival',idiom:'idiom',idiomtest:'idiomtest',dobble:'dobble'};
+    const mode=alias[(p.get('mode')||'').toLowerCase()]||null;
+    const c=parseInt(p.get('count')||'',10);
+    const count=Number.isFinite(c)?Math.min(30,Math.max(5,c)):null;
+    return{grade,mode,count};
+  }catch{return{grade:null,mode:null,count:null};}
+};
+const PortalLink=({className=''})=>{
+  // MoWISE などに iframe で埋め込まれているときは出さない（中でポータルが開いてしまうため）
+  let embedded=false;try{embedded=window.parent!==window;}catch{embedded=true;}
+  if(embedded)return null;
+  return <a href={PORTAL_URL} className={`text-sm text-gray-400 underline underline-offset-4 hover:text-white transition-all ${className}`}>🏠 学習ホームにもどる</a>;
+};
 const GAME_STATES={MENU:'menu',PLAYING:'playing',RESULT:'result',IDIOM_MENU:'idiom_menu',IDIOM_LEARN:'idiom_learn',IDIOM_TEST:'idiom_test',IDIOM_RESULT:'idiom_result',SORTING:'sorting',SORTING_RESULT:'sorting_result'};
 
 // ======== ドブル風ゲームデータ ========
@@ -758,7 +805,7 @@ const getCircularPosition = (idx, total, radiusPercent) => {
   const y = 50 + Math.sin(angle) * radiusPercent;
   return { top: `${y}%`, left: `${x}%`, transform: 'translate(-50%,-50%)' };
 };
-const gradeColors={5:'#00d9ff',4:'#ffd93d',3:'#ff6b9d'};
+const gradeColors={5:'#00d9ff',4:'#ffd93d',3:'#ff6b9d',0:'#ff8e53'};
 const optLabels=['A','B','C','D'];
 
 // ======== ユーティリティ（音声再生）========
@@ -857,8 +904,8 @@ const ComboEffect=({combo})=>{if(combo<2)return null;return(<div className="fixe
 const ConfirmDialog=({isOpen,onConfirm,onCancel})=>{if(!isOpen)return null;return(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"><div className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full mx-4 text-center" style={{animation:'pop 0.3s ease'}}><div className="text-4xl mb-4">🤔</div><h3 className="text-xl font-bold text-white mb-2">ゲームを終了しますか？</h3><p className="text-gray-400 mb-6">現在の進行状況は保存されません</p><div className="flex gap-3"><button className="flex-1 py-3 rounded-xl font-bold text-white bg-gray-600 hover:bg-gray-500 transition-all" onClick={onCancel}>続ける</button><button className="flex-1 py-3 rounded-xl font-bold text-white transition-all" style={{background:'linear-gradient(135deg,#ff6b6b,#ff8e53)'}} onClick={onConfirm}>終了する</button></div></div></div>);};
 
 // ======== メインメニュー ========
-const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,highScores,saveData,daily})=>{
-  const[selectedGrade,setSelectedGrade]=useState(null);
+const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,highScores,saveData,daily,initialGrade=null})=>{
+  const[selectedGrade,setSelectedGrade]=useState(initialGrade);
   const grades=[{level:5,name:'5級',desc:'小学校高学年〜中1',color:'#00d9ff',emoji:'🌟',q:grade5Questions.length},{level:4,name:'4級',desc:'中学2年レベル',color:'#ffd93d',emoji:'⭐',q:grade4Questions.length},{level:3,name:'3級',desc:'中学卒業レベル',color:'#ff6b9d',emoji:'💫',q:grade3Questions.length}];
   const level = saveData?.level || 1;
   const totalXP = saveData?.totalXP || 0;
@@ -874,6 +921,7 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,hig
           <span className="text-5xl md:text-6xl" style={{background:'linear-gradient(135deg,#00d9ff,#00f5d4)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',filter:'drop-shadow(0 0 20px rgba(0,217,255,0.5))'}}>英検</span>
           <span className="text-5xl md:text-6xl" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',filter:'drop-shadow(0 0 20px rgba(255,107,157,0.5))'}}>クエスト</span>
         </h1>
+        <p className="text-sm text-gray-400" style={{fontFamily:"'M PLUS Rounded 1c',sans-serif"}}>英検5級・4級・3級の 単語・文法・表現を 4択クイズで たしかめよう</p>
         <Mascot emotion="happy" message="さあ、チャレンジしよう！"/>
       </div>
 
@@ -911,7 +959,7 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,hig
           <span className="text-4xl">🎯</span>
           <div className="flex-1">
             <div className="text-lg font-black text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>今日のチャレンジ</div>
-            <div className="text-sm text-gray-400">{gradeNames[daily.grade]}に挑戦してボーナスXPをゲット！</div>
+            <div className="text-sm text-gray-400">{gradeNames[daily.grade]}のかくにんテスト（10問）にチャレンジ！</div>
           </div>
           <span className="text-2xl">→</span>
         </button>
@@ -936,11 +984,17 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,hig
           </button>))}
         </div>
       </div>
-      {selectedGrade&&<div className="flex flex-col items-center gap-3" style={{animation:'pop 0.3s ease'}}>
-        <button className="flex items-center gap-4 px-12 py-5 rounded-full cursor-pointer transition-all duration-300 hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',boxShadow:'0 10px 40px rgba(196,78,255,0.4)'}} onClick={()=>onStartGame(selectedGrade,'normal')}>
-          <span className="text-2xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>🚀 ノーマル</span>
-          <span className="text-sm text-white/60">10問</span>
+      {selectedGrade&&<div className="flex flex-col items-center gap-3 w-full max-w-md" data-testid="mode-select" style={{animation:'pop 0.3s ease'}}>
+        <p className="text-sm text-gray-400">{gradeNames[selectedGrade]}：あそびかたをえらぼう</p>
+        <button className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-105 text-left" style={{background:'linear-gradient(135deg,#6bff8e,#00d9ff)',boxShadow:'0 8px 30px rgba(0,217,255,0.3)'}} onClick={()=>onStartGame(selectedGrade,'practice')}>
+          <span className="text-3xl">📖</span>
+          <span className="flex flex-col"><span className="text-xs font-bold text-gray-800">① はじめての人はここから</span><span className="text-xl text-gray-900" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>まなぶ・れんしゅう</span><span className="text-xs text-gray-800">10問・時間せいげんなし・音声つき</span></span>
         </button>
+        <button className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-105 text-left" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)',boxShadow:'0 8px 30px rgba(196,78,255,0.4)'}} onClick={()=>onStartGame(selectedGrade,'normal')}>
+          <span className="text-3xl">🚀</span>
+          <span className="flex flex-col"><span className="text-xs font-bold text-white/80">② おぼえたかな？</span><span className="text-xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>かくにんテスト</span><span className="text-xs text-white/80">ノーマル10問・1問15秒くらい</span></span>
+        </button>
+        <p className="text-xs text-gray-500 mt-2">③ はやさにチャレンジ（やりたい人だけ）</p>
         <div className="flex gap-3">
           <button className="flex flex-col items-center px-6 py-3 rounded-full cursor-pointer transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',boxShadow:'0 6px 20px rgba(255,142,83,0.3)'}} onClick={()=>onStartGame(selectedGrade,'timeattack')}>
             <span className="text-lg text-gray-900 font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>⏱ タイムアタック</span>
@@ -967,6 +1021,7 @@ const MainMenu=({onStartGame,onIdiomSection,onReviewSection,onSortingSection,hig
           </button>
         )}
       </div>
+      <PortalLink className="mt-2" />
     </div>
   );
 };
@@ -1237,7 +1292,7 @@ const BoostRun = ({combo, color, onComplete}) => {
   );
 };
 
-const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='normal'})=>{
+const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='normal',questionCount=DEFAULT_COUNT})=>{
   const[questions,setQuestions]=useState([]);const[ci,setCi]=useState(0);const[score,setScore]=useState(0);const[combo,setCombo]=useState(0);const[maxCombo,setMaxCombo]=useState(0);const[timeLeft,setTimeLeft]=useState(gameMode==='timeattack'?999:gameMode==='survival'?8:15);const[cc,setCc]=useState(0);const[showHint,setShowHint]=useState(false);const[fb,setFb]=useState(null);const[me,setMe]=useState('thinking');const[mm,setMm]=useState('がんばれ〜！');const[showExit,setShowExit]=useState(false);const tRef=useRef(null);const handleAnswerRef=useRef(null);
   const[recentResults,setRecentResults]=useState([]); // adaptive difficulty tracking
   const[comboMilestone,setComboMilestone]=useState(false);
@@ -1248,7 +1303,18 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
   const[lastBoostCombo,setLastBoostCombo]=useState(0); // 前回ブースト発動時のcombo
   const totalTimeRef=useRef(totalTime);
   const scoreRef=useRef(score);const ccRef=useRef(cc);const ciRef=useRef(ci);const maxComboRef=useRef(maxCombo);
-  const color=gradeColors[grade];
+  // 記録用: 実際に答えた数・時間切れの数・まちがえた問題（選んだ答えつき）
+  const answeredRef=useRef(0);const timeoutsRef=useRef(0);const wrongsRef=useRef([]);const correctsRef=useRef([]);const endedRef=useRef(false);
+  const onGameEndRef=useRef(onGameEnd);onGameEndRef.current=onGameEnd;
+  const advanceRef=useRef(null);
+  const isPractice=gameMode==='practice';
+  const hasCount=gameMode==='normal'||isPractice; // 問題数が決まっているモード
+  const noQuestionTimer=gameMode==='timeattack'||isPractice;
+  const color=gradeColors[grade]||gradeColors[0];
+  const finishGame=()=>{
+    if(endedRef.current)return;endedRef.current=true;
+    onGameEndRef.current({score:scoreRef.current,correctCount:ccRef.current,maxCombo:maxComboRef.current,totalQuestions:answeredRef.current,timeouts:timeoutsRef.current,wrongs:wrongsRef.current,corrects:correctsRef.current,mode:gameMode});
+  };
 
   // モード別の1問あたり制限時間
   const getBaseTime = () => {
@@ -1278,25 +1344,30 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       setQuestions(shuffled);
     } else {
       // タイムアタック＆サバイバルは大量に用意（事実上無限ループ）
-      const count = gameMode === 'normal' ? 10 : 100;
+      const count = hasCount ? questionCount : 100;
       const allQ = getQuestionsByGrade(grade);
       // 100問以上必要な場合はプール全体を複数回シャッフルして連結
       let pool = [];
       while (pool.length < count) { pool = pool.concat(shuffleArray([...allQ])); }
-      setQuestions(pool.slice(0, count).map(q => shuffleOptions(q)));
+      setQuestions(pool.slice(0, count).map(q => ({...shuffleOptions(q), grade})));
     }
   },[grade, gameMode]);
 
   const handleAnswer=useCallback((si)=>{
-    if(fb!==null)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
+    if(fb!==null||endedRef.current)return;clearInterval(tRef.current);const cq=questions[ci];const ok=si===cq.answer;
+    const timedOut=si<0; // タイマー切れ（まちがいとは別に数える）
+    answeredRef.current+=1;
     setRecentResults(prev => [...prev, ok]);
     const newCombo = ok ? combo + 1 : 0;
     const shouldBoost = gameMode === 'survival' && ok && newCombo >= 3 && newCombo % 3 === 0 && newCombo !== lastBoostCombo;
+    const completeSentence = (cq.type==='grammar'||cq.type==='idiom') ? cq.question.replace(/___+/g, cq.options[cq.answer]) : null;
+    // 読み上げ: 文法/表現は完成文、単語は英語の単語（3級の「英語→日本語」問題は問題文の英単語）
+    const speakText = completeSentence || (isEnglishText(cq.options[cq.answer]) ? cq.options[cq.answer] : englishInQuestion(cq));
 
     if(ok){
-      // モード別スコア計算
+      // モード別スコア計算（れんしゅうは速さを点にしない）
       const timeBonus = gameMode === 'timeattack' ? Math.max(0, Math.floor(totalTimeRef.current * 2)) : Math.floor(timeLeft * 10);
-      const pts = 100 + timeBonus + combo * 50;
+      const pts = isPractice ? 100 : 100 + timeBonus + combo * 50;
       setScore(p=>p+pts);setCombo(p=>p+1);setMaxCombo(p=>Math.max(p,combo+1));setCc(p=>p+1);
       // Combo milestone check
       if ([3,5,7,10].includes(newCombo) && !shouldBoost) {
@@ -1309,31 +1380,27 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       setMm(ms[Math.floor(Math.random()*ms.length)]);
       setMe(newCombo>=5?'excited':'happy');
       playCorrectChime();
-      // 文法/表現問題は完成文を読み上げ、単語問題は正解単語を読み上げ
-      const completeSentence = (cq.type==='grammar'||cq.type==='idiom') ? cq.question.replace(/___+/g, cq.options[cq.answer]) : null;
-      setTimeout(()=>playSound(completeSentence || cq.options[cq.answer]),300);
-      setFb({type:'correct',points:pts,completeSentence,translation:cq.translation});
-      // Ref更新（タイムアタック終了時のクロージャ用）
+      if(speakText)setTimeout(()=>playSound(speakText),300);
+      setFb({type:'correct',points:pts,completeSentence,translation:cq.translation,speakText});
+      // Ref更新（終了時の集計用）
+      correctsRef.current=[...correctsRef.current,cq.question];
       scoreRef.current=score+pts;ccRef.current=cc+1;ciRef.current=ci;maxComboRef.current=Math.max(maxCombo,combo+1);
     } else {
-      const completeSentence = (cq.type==='grammar'||cq.type==='idiom') ? cq.question.replace(/___+/g, cq.options[cq.answer]) : null;
-      setCombo(0);setFb({type:'wrong',correctAnswer:cq.options[cq.answer],completeSentence,translation:cq.translation});setMm('ドンマイ！');setMe('sad');playErrorSound();setTimeout(()=>playSound(completeSentence || cq.options[cq.answer]),500);if(onWrong)onWrong(cq);
+      scoreRef.current=score;ccRef.current=cc;maxComboRef.current=maxCombo;
+      if(timedOut)timeoutsRef.current+=1;
+      const wrongItem={...cq,chosen:timedOut?'':cq.options[si],timedOut};
+      wrongsRef.current=[...wrongsRef.current,wrongItem];
+      setCombo(0);setFb({type:'wrong',timedOut,correctAnswer:cq.options[cq.answer],completeSentence,translation:cq.translation,speakText});setMm(timedOut?'時間切れ！':'ドンマイ！');setMe('sad');playErrorSound();if(speakText)setTimeout(()=>playSound(speakText),500);if(onWrong)onWrong(wrongItem);
       if (gameMode === 'survival' && lives !== null) setLives(prev => prev - 1);
     }
 
-    const endGame = (isCorrect) => {
-      const timeBonus = gameMode === 'timeattack' ? Math.max(0, Math.floor(totalTimeRef.current * 2)) : Math.floor(timeLeft * 10);
-      const finalScore = isCorrect ? score + 100 + timeBonus + combo * 50 : score;
-      const finalCorrect = isCorrect ? cc+1 : cc;
-      onGameEnd({score:finalScore, correctCount:finalCorrect, maxCombo:Math.max(maxCombo, isCorrect?combo+1:maxCombo), totalQuestions:ci+1, mode:gameMode});
-    };
-
-    setTimeout(()=>{
+    const advance=()=>{
+      advanceRef.current=null;
       setFb(null);setShowHint(false);setMe('thinking');setMm('');
       // Survival: check lives
-      if (gameMode === 'survival' && !ok && lives <= 1) { endGame(false); return; }
-      // Normal/TimeAttack: check if questions exhausted
-      if(ci+1>=questions.length){ endGame(ok); }
+      if (gameMode === 'survival' && !ok && lives <= 1) { finishGame(); return; }
+      // Normal/Practice: check if questions exhausted
+      if(ci+1>=questions.length){ finishGame(); }
       // ブーストラン発動チェック
       else if (ok && shouldBoost) {
         clearInterval(tRef.current);
@@ -1341,9 +1408,13 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
         setBoostActive(true);
       }
       else { setCi(p=>p+1); setTimeLeft(getAdaptiveTime()); }
+    };
+    advanceRef.current=advance;
+    // れんしゅうモードは自動で進めず、「つぎへ」ボタンで進む
+    if(isPractice)return;
     // 級・問題タイプ別の表示時間（3級は文が長いので長めに）
-    },(() => { const s = cq.type==='grammar'||cq.type==='idiom'; return ok ? (s ? (grade===3?3500:2500) : 1200) : (s ? (grade===3?5500:4000) : 2500); })());
-  },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,onGameEnd,lives,gameMode,recentResults,lastBoostCombo]);
+    setTimeout(()=>{if(advanceRef.current===advance)advance();},(() => { const st = cq.type==='grammar'||cq.type==='idiom'; return ok ? (st ? (grade===3?3500:2500) : 1200) : (st ? (grade===3?5500:4000) : 2500); })());
+  },[ci,questions,score,combo,maxCombo,cc,timeLeft,fb,lives,gameMode,recentResults,lastBoostCombo]);
   handleAnswerRef.current=handleAnswer;
 
   // ブーストラン完了ハンドラー
@@ -1355,6 +1426,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       setMm('ドンマイ！');
     } else {
       setScore(p => p + result.bonus);
+      scoreRef.current += result.bonus;
       setMe('excited');
       setMm('ナイスラン！');
       setComboMilestone(true);
@@ -1367,7 +1439,7 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
   }, []);
 
   // Question timer (タイムアタックは全体タイマーのみなので個別タイマー不要)
-  useEffect(()=>{if(!questions.length||boostActive||gameMode==='timeattack')return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
+  useEffect(()=>{if(!questions.length||boostActive||noQuestionTimer)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);return()=>clearInterval(tRef.current);},[ci,questions.length]);
 
   // Time attack global timer
   useEffect(()=>{
@@ -1376,7 +1448,8 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
       setTotalTime(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          onGameEnd({score:scoreRef.current, correctCount:ccRef.current, maxCombo:maxComboRef.current, totalQuestions:ciRef.current+1, mode:'timeattack'});
+          // 答えた数だけを集計（表示中で未回答の問題は数えない）
+          setTimeout(finishGame, 0);
           return 0;
         }
         totalTimeRef.current = prev - 1;
@@ -1386,48 +1459,65 @@ const GameScreen=({grade,onGameEnd,onExit,onWrong,reviewQuestions,gameMode='norm
     return () => clearInterval(interval);
   },[questions.length]);
   if(!questions.length)return<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
-  const cq=questions[ci];const prog=gameMode==='normal'?((ci+1)/questions.length)*100:0;const tc=gameMode==='timeattack'?'#00d9ff':timeLeft<=3?'#ff6b6b':timeLeft<=5?'#ffd93d':'#6bff8e';
+  const cq=questions[ci];const prog=hasCount?((ci+1)/questions.length)*100:0;const qEnglish=englishInQuestion(cq);const tc=gameMode==='timeattack'?'#00d9ff':timeLeft<=3?'#ff6b6b':timeLeft<=5?'#ffd93d':'#6bff8e';
   return(
     <div className="min-h-screen p-4" style={{background:`radial-gradient(circle at 30% 70%,${color}15 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)`}}>
       {boostActive && <BoostRun combo={combo} color={color} onComplete={handleBoostComplete}/>}
       <ComboEffect combo={combo}/>
       <ComboMilestone combo={combo} show={comboMilestone}/>
       <ConfettiExplosion show={showConfetti}/>
-      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>{setShowExit(false);clearInterval(tRef.current);tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);}}/>
+      <ConfirmDialog isOpen={showExit} onConfirm={onExit} onCancel={()=>{setShowExit(false);clearInterval(tRef.current);if(noQuestionTimer||fb!==null)return;tRef.current=setInterval(()=>{setTimeLeft(p=>{if(p<=1){handleAnswerRef.current(-1);return getAdaptiveTime();}return p-1;});},1000);}}/>
       <div className="flex justify-between items-center p-4 rounded-2xl mb-6" style={{background:'rgba(37,37,66,0.8)'}}>
         <button className="p-2 rounded-xl hover:bg-white/10 transition-all mr-2" onClick={()=>{clearInterval(tRef.current);setShowExit(true);}}><span className="text-2xl">←</span></button>
         <div className="flex items-center gap-4">
-          <div className="px-4 py-2 rounded-full text-lg font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade}級</div>
+          <div className="flex flex-col items-center gap-1"><div className="px-4 py-2 rounded-full text-lg font-bold" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{grade?`${grade}級`:'復習'}</div><span className="text-[10px] text-gray-400 whitespace-nowrap">{MODE_INFO[gameMode]?.short}</span></div>
           <div className="flex flex-col"><span className="text-xs text-gray-400">SCORE</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>{score.toLocaleString()}</span></div>
           {gameMode==='survival'&&lives!==null&&<div className="flex gap-1">{[...Array(3)].map((_,i)=>(<span key={i} className="text-xl" style={{opacity:i<lives?1:0.2}}>{i<lives?'❤️':'🖤'}</span>))}</div>}
           {gameMode==='timeattack'&&totalTime!==null&&<div className="flex flex-col items-center px-3 py-1 rounded-xl" style={{background:totalTime<=15?'rgba(255,107,107,0.2)':totalTime<=30?'rgba(255,217,61,0.15)':'rgba(0,217,255,0.1)',animation:totalTime<=10?'pulse 0.5s infinite':undefined}}><span className="text-xs text-gray-400">⏱ 残り時間</span><span className="text-2xl font-bold" style={{fontFamily:"'Dela Gothic One',sans-serif",color:totalTime<=15?'#ff6b6b':totalTime<=30?'#ffd93d':'#00d9ff'}}>{totalTime}s</span></div>}
         </div>
-        {gameMode==='normal'&&<div className="flex-1 max-w-xs mx-4"><div className="text-center text-sm text-gray-400 mb-2">{ci+1}/{questions.length}</div><div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div></div>}
+        {hasCount&&<div className="flex-1 max-w-xs mx-4"><div className="text-center text-sm text-gray-400 mb-2">{ci+1}/{questions.length}</div><div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-300" style={{width:`${prog}%`,background:`linear-gradient(90deg,${color},#c44eff)`}}/></div></div>}
         {gameMode==='timeattack'&&<div className="flex flex-col items-center mx-4"><span className="text-xs text-gray-400">解答数</span><span className="text-2xl font-bold text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{cc}問</span></div>}
         {gameMode==='survival'&&<div className="flex flex-col items-center mx-4"><span className="text-xs text-gray-400">生き残り</span><span className="text-2xl font-bold text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{ci+1}問目</span></div>}
-        {gameMode!=='timeattack'&&<div className="relative w-14 h-14"><svg viewBox="0 0 36 36" className="w-full h-full -rotate-90"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#252542" strokeWidth="3"/><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={tc} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${(timeLeft/(gameMode==='survival'?8:15))*100},100`} className="transition-all duration-1000"/></svg><span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:tc}}>{timeLeft}</span></div>}
+        {isPractice&&<div className="flex flex-col items-center text-center leading-tight"><span className="text-xl">🌱</span><span className="text-[10px] text-gray-400 whitespace-nowrap">時間せいげん<br/>なし</span></div>}
+        {!noQuestionTimer&&<div className="relative w-14 h-14"><svg viewBox="0 0 36 36" className="w-full h-full -rotate-90"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#252542" strokeWidth="3"/><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={tc} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${(timeLeft/(gameMode==='survival'?8:15))*100},100`} className="transition-all duration-1000"/></svg><span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:tc}}>{timeLeft}</span></div>}
       </div>
       <div className="max-w-4xl mx-auto grid md:grid-cols-[1fr_auto] gap-6">
         <div className="flex flex-col gap-5">
           <div className={`rounded-2xl p-6 text-center border-2 transition-all ${fb?.type==='correct'?'border-green-400':fb?.type==='wrong'?'border-red-400':'border-gray-600'}`} style={{background:'rgba(37,37,66,0.9)',animation:fb?.type==='wrong'?'shake 0.5s ease':undefined}}>
             <span className="inline-block px-3 py-1 rounded-lg text-xs font-bold mb-4" style={{background:color,color:'#1a1a2e'}}>{cq.type==='vocab'?'単語':cq.type==='grammar'?'文法':'表現'}</span>
             <h2 className="text-xl md:text-2xl font-bold text-white leading-relaxed">{cq.question}</h2>
+            {isPractice&&qEnglish&&<div className="mt-4"><button className="px-4 py-2 rounded-full text-sm font-bold border-2 transition-all hover:scale-105" style={{borderColor:color,color:color,background:'rgba(15,15,26,0.5)'}} onClick={()=>playSound(qEnglish)}>🔊 英語をきく</button></div>}
             {showHint&&<div className="mt-4 px-5 py-3 rounded-xl text-base" style={{background:'rgba(255,217,61,0.15)',border:'1px solid rgba(255,217,61,0.3)',color:'#ffd93d'}}>💡 ヒント: {cq.hint}</div>}
           </div>
-          <div className="grid grid-cols-2 gap-3">{cq.options.map((o,i)=>(<button key={i} className="flex items-center gap-4 p-4 rounded-xl border-2 transition-all hover:-translate-y-1" style={{background:fb&&i===cq.answer?'rgba(107,255,142,0.15)':'rgba(37,37,66,0.9)',borderColor:fb&&i===cq.answer?'#6bff8e':'#4b5563',color:color}} onClick={()=>handleAnswer(i)} disabled={fb!==null}><span className="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{optLabels[i]}</span><span className="text-lg text-white">{o}</span></button>))}</div>
+          {isPractice&&!fb&&cq.options.every(isEnglishText)&&<p className="text-xs text-gray-400 text-center -mb-2">🔊 をおすと、えいごの音がきけるよ。ゆっくり考えてOK！</p>}
+          <div className="grid grid-cols-2 gap-3">{cq.options.map((o,i)=>(<button key={i} className="flex items-center gap-4 p-4 rounded-xl border-2 transition-all hover:-translate-y-1" style={{background:fb&&i===cq.answer?'rgba(107,255,142,0.15)':'rgba(37,37,66,0.9)',borderColor:fb&&i===cq.answer?'#6bff8e':'#4b5563',color:color}} onClick={()=>handleAnswer(i)} disabled={fb!==null}><span className="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0" style={{background:color,color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{optLabels[i]}</span><span className="text-lg text-white flex-1 text-left">{o}</span>{isPractice&&isEnglishText(o)&&<span role="button" tabIndex={0} aria-label={`${o} の音をきく`} className="w-9 h-9 rounded-full flex items-center justify-center text-base flex-shrink-0 hover:scale-110 transition-all" style={{background:'rgba(255,255,255,0.1)',pointerEvents:'auto'}} onClick={(e)=>{e.stopPropagation();playSound(o);}}>🔊</span>}</button>))}</div>
+          {isPractice&&fb&&<div className="rounded-2xl p-5 flex flex-col items-center gap-3 border-2" data-testid="practice-feedback" style={{background:'rgba(37,37,66,0.95)',borderColor:fb.type==='correct'?'#6bff8e':'#ff6b6b',animation:'slideUp 0.3s ease'}}>
+            <span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'✓ せいかい！':'✗ おしい！'}</span>
+            {fb.type==='wrong'&&<div className="flex items-center gap-3"><span className="text-sm text-gray-400">こたえは</span><span className="text-xl px-4 py-2 rounded-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e',background:'rgba(107,255,142,0.15)',border:'2px solid #6bff8e'}}>{fb.correctAnswer}</span></div>}
+            {fb.completeSentence&&<div className="flex flex-col items-center gap-1 text-center"><span className="text-base text-white font-bold" style={{fontFamily:"'Inter',sans-serif"}}>{fb.completeSentence}</span>{fb.translation&&<span className="text-sm" style={{color:'#a0aec0'}}>{fb.translation}</span>}</div>}
+            <div className="flex flex-wrap justify-center gap-3 mt-1">
+              {fb.speakText&&<button className="px-5 py-3 rounded-full text-sm font-bold text-white border-2 border-white/20 bg-white/10 transition-all hover:scale-105" onClick={()=>playSound(fb.speakText)}>🔊 もういちど きく</button>}
+              <button className="px-8 py-3 rounded-full text-lg font-bold text-white transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}} onClick={()=>advanceRef.current&&advanceRef.current()}>{ci+1>=questions.length?'けっかを見る →':'つぎへ →'}</button>
+            </div>
+          </div>}
           {!showHint&&!fb&&<button className="px-5 py-3 rounded-xl text-sm text-gray-400 border-2 border-dashed border-gray-600 hover:border-yellow-400 hover:text-yellow-400 transition-all" onClick={()=>setShowHint(true)}>💡 ヒントを見る</button>}
         </div>
         <div className="flex flex-col items-center gap-5 md:order-none order-first"><Mascot emotion={me} message={mm}/>{combo>=2&&<div className="px-5 py-3 rounded-xl flex flex-col items-center" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}}><span className="text-xs text-white/80">COMBO</span><span className="text-2xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>×{combo}</span></div>}</div>
       </div>
-      {fb&&<div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"><div className="flex flex-col items-center gap-3 max-w-md mx-4" style={{animation:'pop 0.3s ease'}}><div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl font-bold" style={{background:fb.type==='correct'?'#6bff8e':'#ff6b6b',color:fb.type==='correct'?'#1a1a2e':'white',boxShadow:`0 0 40px ${fb.type==='correct'?'rgba(107,255,142,0.6)':'rgba(255,107,107,0.6)'}`}}>{fb.type==='correct'?'✓':'✗'}</div><span className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'正解!':'不正解...'}</span>{fb.type==='correct'?<span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>+{fb.points}pt</span>:<div className="flex flex-col items-center gap-2 mt-2" style={{animation:'slideUp 0.3s ease 0.2s both'}}><span className="text-sm text-gray-400">正解は</span><span className="text-2xl px-6 py-3 rounded-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e',background:'rgba(107,255,142,0.15)',border:'2px solid #6bff8e',boxShadow:'0 0 20px rgba(107,255,142,0.3)'}}>{fb.correctAnswer}</span></div>}{fb.completeSentence&&<div className="flex flex-col items-center gap-1 mt-2 px-5 py-3 rounded-xl" style={{background:'rgba(37,37,66,0.95)',border:'1px solid rgba(255,255,255,0.1)',animation:'slideUp 0.3s ease 0.3s both'}}><span className="text-base text-white font-bold" style={{fontFamily:"'Inter',sans-serif"}}>{fb.completeSentence}</span>{fb.translation&&<span className="text-sm" style={{color:'#a0aec0',fontFamily:"'Noto Sans JP',sans-serif"}}>{fb.translation}</span>}</div>}</div></div>}
+      {fb&&!isPractice&&<div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"><div className="flex flex-col items-center gap-3 max-w-md mx-4" style={{animation:'pop 0.3s ease'}}><div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl font-bold" style={{background:fb.type==='correct'?'#6bff8e':'#ff6b6b',color:fb.type==='correct'?'#1a1a2e':'white',boxShadow:`0 0 40px ${fb.type==='correct'?'rgba(107,255,142,0.6)':'rgba(255,107,107,0.6)'}`}}>{fb.type==='correct'?'✓':fb.timedOut?'⏰':'✗'}</div><span className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:fb.type==='correct'?'#6bff8e':'#ff6b6b'}}>{fb.type==='correct'?'正解!':fb.timedOut?'時間切れ...':'不正解...'}</span>{fb.type==='correct'?<span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#ffd93d'}}>+{fb.points}pt</span>:<div className="flex flex-col items-center gap-2 mt-2" style={{animation:'slideUp 0.3s ease 0.2s both'}}><span className="text-sm text-gray-400">正解は</span><span className="text-2xl px-6 py-3 rounded-xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:'#6bff8e',background:'rgba(107,255,142,0.15)',border:'2px solid #6bff8e',boxShadow:'0 0 20px rgba(107,255,142,0.3)'}}>{fb.correctAnswer}</span></div>}{fb.completeSentence&&<div className="flex flex-col items-center gap-1 mt-2 px-5 py-3 rounded-xl" style={{background:'rgba(37,37,66,0.95)',border:'1px solid rgba(255,255,255,0.1)',animation:'slideUp 0.3s ease 0.3s both'}}><span className="text-base text-white font-bold" style={{fontFamily:"'Inter',sans-serif"}}>{fb.completeSentence}</span>{fb.translation&&<span className="text-sm" style={{color:'#a0aec0',fontFamily:"'Noto Sans JP',sans-serif"}}>{fb.translation}</span>}</div>}</div></div>}
     </div>
   );
 };
 
 // ======== リザルト画面 ========
-const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表',xpEarned=0,saveData})=>{
+const ResultScreen=({result,grade,onRetry,onMenu,onPractice,highScore,title='結果発表',xpEarned=0,saveData})=>{
   const[sd,setSd]=useState(false);
-  useEffect(()=>{reportToMoWISE(result,grade,title);},[]);  // eslint-disable-lineconst inh=result.score>highScore;const acc=Math.round((result.correctCount/result.totalQuestions)*100);
+  // ※ スコア送信は App 側（handleGameEnd など）で1回だけ行う。ここでは送らない（二重送信防止）
+  const isPractice=result.mode==='practice';
+  const inh=!isPractice&&result.score>highScore;
+  const acc=result.totalQuestions>0?Math.round((result.correctCount/result.totalQuestions)*100):0;
+  const timeouts=result.timeouts||0;
+  const mistakes=Math.max(0,result.totalQuestions-result.correctCount-timeouts);
   const getRank=()=>{if(acc>=90)return{rank:'S',color:'#ffd93d',msg:'素晴らしい！完璧に近い！'};if(acc>=70)return{rank:'A',color:'#6bff8e',msg:'すごい！よくできました！'};if(acc>=50)return{rank:'B',color:'#00d9ff',msg:'がんばりました！'};if(acc>=30)return{rank:'C',color:'#c44eff',msg:'もう少し練習しよう！'};return{rank:'D',color:'#ff6b6b',msg:'次はもっとがんばろう！'};};
   const{rank,color,msg}=getRank();
   useEffect(()=>{const t=setTimeout(()=>setSd(true),500);return()=>clearTimeout(t);},[]);
@@ -1435,7 +1525,7 @@ const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表',
     <div className="min-h-screen p-6 flex flex-col items-center justify-center" style={{background:'radial-gradient(circle at 50% 30%,rgba(255,217,61,0.1) 0%,transparent 50%),linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)'}}>
       {inh&&<div className="px-10 py-4 rounded-full text-2xl text-white font-bold mb-8" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(90deg,#ff6b9d,#ffd93d,#00f5d4,#c44eff,#ff6b9d)',backgroundSize:'400% 100%',animation:'rainbow 3s linear infinite'}}>🎉 NEW HIGH SCORE! 🎉</div>}
       <div className="rounded-3xl p-10 max-w-md w-full flex flex-col items-center gap-8" style={{background:'rgba(37,37,66,0.95)',boxShadow:'0 20px 60px rgba(0,0,0,0.4)',animation:'slideUp 0.5s ease'}}>
-        <h1 className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(135deg,#ff6b9d,#c44eff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{title}</h1>
+        <h1 className="text-3xl text-center" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(135deg,#ff6b9d,#c44eff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{title}</h1>
         <div className="flex flex-col items-center gap-4"><div className="w-28 h-28 rounded-full flex items-center justify-center" style={{background:`linear-gradient(135deg,${color},${color}99)`,boxShadow:`0 0 50px ${color}80`,animation:'pop 0.5s ease'}}><span className="text-6xl text-white" style={{fontFamily:"'Dela Gothic One',sans-serif"}}>{rank}</span></div><p className="text-lg text-gray-400">{msg}</p></div>
         <Mascot emotion={acc>=70?'excited':acc>=50?'happy':'sad'} message={acc>=70?'最高！':acc>=50?'いい感じ！':'また挑戦しよう！'}/>
         {/* Near-miss feedback */}
@@ -1453,6 +1543,13 @@ const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表',
         )}
         {sd&&<>
           <div className="grid grid-cols-2 gap-5 w-full" style={{animation:'slideUp 0.5s ease 0.3s both'}}>{[{label:'スコア',value:result.score.toLocaleString(),c:'#ffd93d'},{label:'正解数',value:`${result.correctCount}/${result.totalQuestions}`,c:'white'},{label:'正解率',value:`${acc}%`,c:'white'},{label:'最大コンボ',value:`${result.maxCombo}×`,c:'#ff6b9d'}].map((s,i)=>(<div key={i} className="rounded-xl p-5 flex flex-col items-center gap-2" style={{background:'rgba(15,15,26,0.5)'}}><span className="text-sm text-gray-400">{s.label}</span><span className="text-2xl" style={{fontFamily:"'Dela Gothic One',sans-serif",color:s.c}}>{s.value}</span></div>))}</div>
+          {(mistakes>0||timeouts>0)&&result.mode&&(
+            <div className="w-full rounded-xl p-4 flex flex-col gap-2 text-sm" data-testid="miss-breakdown" style={{background:'rgba(15,15,26,0.5)',animation:'slideUp 0.5s ease 0.4s both'}}>
+              <div className="flex justify-around text-white font-bold"><span>✗ まちがい {mistakes}問</span><span>⏰ 時間切れ {timeouts}問</span></div>
+              {timeouts>0&&<p className="text-xs text-gray-400 text-center leading-relaxed">時間切れは「知らない」とはかぎらないよ。<br/>時間せいげんなしの「まなぶ・れんしゅう」で、もう一度たしかめよう。</p>}
+              {timeouts>0&&onPractice&&<button className="self-center px-5 py-2 rounded-full text-sm font-bold transition-all hover:scale-105" style={{background:'linear-gradient(135deg,#6bff8e,#00d9ff)',color:'#1a1a2e'}} onClick={onPractice}>📖 まなぶ・れんしゅうへ</button>}
+            </div>
+          )}
           {saveData && (
             <div className="w-full rounded-xl p-4 flex items-center gap-4" style={{background:'rgba(255,217,61,0.1)',border:'1px solid rgba(255,217,61,0.2)',animation:'slideUp 0.5s ease 0.5s both'}}>
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black" style={{background:'linear-gradient(135deg,#ffd93d,#ff8e53)',color:'#1a1a2e',fontFamily:"'Dela Gothic One',sans-serif"}}>{saveData.level}</div>
@@ -1463,7 +1560,8 @@ const ResultScreen=({result,grade,onRetry,onMenu,highScore,title='結果発表',
             </div>
           )}
         </>}
-        <div className="flex gap-5 w-full"><button className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-lg font-bold text-white transition-all hover:-translate-y-1" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}} onClick={onRetry}><span>🔄</span><span>もう一度</span></button><button className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-lg font-bold text-white border-2 border-white/20 bg-white/10 transition-all hover:-translate-y-1" onClick={onMenu}><span>🏠</span><span>メニュー</span></button></div>
+        <div className="flex gap-5 w-full"><button className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-lg font-bold text-white transition-all hover:-translate-y-1" style={{background:'linear-gradient(135deg,#ff6b9d,#c44eff)'}} onClick={onRetry}><span>🔄</span><span>もう一度</span></button><button className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-lg font-bold text-white border-2 border-white/20 bg-white/10 transition-all hover:-translate-y-1" onClick={onMenu}><span>📋</span><span>メニュー</span></button></div>
+        <PortalLink />
       </div>
     </div>
   );
@@ -1959,12 +2057,12 @@ const ReviewScreen = ({wrongHistory, onStartReview, onBack}) => {
       <button className="self-start p-3 rounded-xl hover:bg-white/10 transition-all text-2xl text-white" onClick={onBack}>← 戻る</button>
       <h1 className="text-3xl" style={{fontFamily:"'Dela Gothic One',sans-serif",background:'linear-gradient(135deg,#ff6b6b,#ff8e53)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>復習モード</h1>
       <Mascot emotion="thinking" message="苦手を克服しよう！" />
-      <p className="text-gray-400">{sorted.length}問の復習問題があります</p>
+      <p className="text-gray-400 text-center">{sorted.length}問の復習問題があります<br/><span className="text-xs">時間せいげんなしで、1回に10問まで。正解すると回数が1つへるよ。⏰＝時間切れだった回数</span></p>
       <div className="w-full max-w-md space-y-2 max-h-60 overflow-y-auto">
         {sorted.slice(0, 10).map((q, i) => (
           <div key={i} className="flex justify-between items-center px-4 py-3 rounded-xl" style={{background:'rgba(37,37,66,0.8)'}}>
             <span className="text-white text-sm truncate flex-1">{q.question}</span>
-            <span className="text-xs px-2 py-1 rounded-full ml-2" style={{background:'rgba(255,107,107,0.2)',color:'#ff6b6b'}}>{q.wrongCount}回</span>
+            {q.timeoutCount>0&&<span className="text-xs px-2 py-1 rounded-full ml-2 whitespace-nowrap" style={{background:'rgba(255,217,61,0.2)',color:'#ffd93d'}}>⏰{q.timeoutCount}</span>}<span className="text-xs px-2 py-1 rounded-full ml-2 whitespace-nowrap" style={{background:'rgba(255,107,107,0.2)',color:'#ff6b6b'}}>{q.wrongCount}回</span>
           </div>
         ))}
       </div>
@@ -1999,9 +2097,12 @@ const reportToMoWISE = (result, grade, mode, wrongList) => {
     if (typeof window === 'undefined' || !window.WiseGame) return;
     const acc = result.totalQuestions > 0
       ? Math.round((result.correctCount / result.totalQuestions) * 100) : 0;
+    // correct = 正解の選択肢の文字、chosen = 実際に選んだ選択肢（時間切れは「（時間切れ）」）
     const wa = (wrongList || []).slice(0, 20).map(q => ({
-      q: q.question || '', correct: q.correctAnswer || q.answer || '',
-      chosen: q.playerAnswer || '', tag: 'vocab_eiken' + (grade || '5')
+      q: q.question || '',
+      correct: (q.options && q.options[q.answer]) || q.meaning || '',
+      chosen: q.timedOut ? TIMEOUT_LABEL : (q.chosen || ''),
+      tag: 'vocab_eiken' + (gradeOfQuestion(q) || grade || '5')
     }));
     window.WiseGame.reportComplete({
       score: result.score,
@@ -2009,7 +2110,8 @@ const reportToMoWISE = (result, grade, mode, wrongList) => {
       accuracy: acc,
       metadata: { grade: String(grade), mode: mode || 'quiz',
                   maxCombo: result.maxCombo, correct: result.correctCount,
-                  total: result.totalQuestions, wrongAnswers: wa }
+                  total: result.totalQuestions, timeouts: result.timeouts || 0,
+                  wrongAnswers: wa }
     });
   } catch (e) {}
 };
@@ -2018,7 +2120,7 @@ const reportWrongToXP = (q) => {
     window.WiseXP.reportWrong({
       question: q.question,
       correct: q.options[q.answer],
-      playerAnswer: ''
+      playerAnswer: q.timedOut ? TIMEOUT_LABEL : (q.chosen || '')
     }).catch(() => {});
   }
 };
@@ -2029,8 +2131,13 @@ export default function App(){
     const loaded = loadSaveData();
     return loaded || getDefaultSaveData();
   });
-  const [gs, setGs] = useState(GAME_STATES.MENU);
-  const [sg, setSg] = useState(5);
+  // URLパラメータ（?grade=5&mode=practice&count=10 など）での直接起動
+  const deepLink = useRef(null);
+  if (deepLink.current === null) deepLink.current = parseDeepLink();
+  const dl = deepLink.current;
+  const dlState = { practice: GAME_STATES.PLAYING, normal: GAME_STATES.PLAYING, timeattack: GAME_STATES.PLAYING, survival: GAME_STATES.PLAYING, idiom: GAME_STATES.IDIOM_LEARN, idiomtest: GAME_STATES.IDIOM_TEST, dobble: GAME_STATES.SORTING }[dl.mode];
+  const [gs, setGs] = useState(dlState || GAME_STATES.MENU);
+  const [sg, setSg] = useState(dl.grade || 5);
   const [gr, setGr] = useState(null);
   const [wrongThisGame, setWrongThisGame] = useState([]);
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -2070,9 +2177,10 @@ export default function App(){
     });
   };
 
-  const [gameMode, setGameMode] = useState('normal');
+  const [gameMode, setGameMode] = useState(dlState === GAME_STATES.PLAYING ? dl.mode : 'normal');
+  const [questionCount, setQuestionCount] = useState(dl.count || DEFAULT_COUNT); // まなぶ・かくにんの問題数（URLの count で指定可）
   const [gameKey, setGameKey] = useState(0); // 再マウント用キー
-  const handleStartGame = (g, mode='normal') => { setSg(g); setGameMode(mode); setGs(GAME_STATES.PLAYING); setWrongThisGame([]); setGameKey(k => k + 1); };
+  const handleStartGame = (g, mode='normal') => { setSg(g); setGameMode(mode); setQuestionCount(DEFAULT_COUNT); setGs(GAME_STATES.PLAYING); setWrongThisGame([]); setGameKey(k => k + 1); };
 
   const handleGameEnd = (r) => {
     setGr(r);
@@ -2082,22 +2190,27 @@ export default function App(){
     const newLevel = calcLevel(newXP);
     const today = getTodayStr();
     const dc = saveData.dailyChallenge;
-    const dailyCompleted = dc.date === today && dc.grade === sg ? true : dc.completed;
+    // 今日のチャレンジ＝その級の「かくにんテスト（ノーマル）」をやりきること
+    const dailyCompleted = dc.date === today && dc.grade === sg && r.mode === 'normal' ? true : dc.completed;
+    // この回にまちがえた／時間切れになった問題（GameScreen が最後の1問まで含めて返す）
+    const wrongs = r.wrongs || wrongThisGame;
+    // ハイスコアは級別のテスト系モードだけ（れんしゅう・復習は対象外）
+    const countsForHighScore = [5,4,3].includes(sg) && r.mode !== 'practice';
 
     persist(prev => ({
       ...prev,
-      highScores: r.score > prev.highScores[sg] ? { ...prev.highScores, [sg]: r.score } : prev.highScores,
+      highScores: countsForHighScore && r.score > (prev.highScores[sg]||0) ? { ...prev.highScores, [sg]: r.score } : prev.highScores,
       totalXP: newXP,
       level: newLevel,
       gamesPlayed: prev.gamesPlayed + 1,
       streak: updateStreak(prev.streak),
       dailyChallenge: { ...prev.dailyChallenge, completed: dailyCompleted },
-      wrongHistory: addWrongQuestions(prev.wrongHistory, wrongThisGame),
+      wrongHistory: addWrongQuestions(sg === 0 ? clearReviewed(prev.wrongHistory, r.corrects) : prev.wrongHistory, wrongs),
     }));
 
     // Report to shared XP system
     reportToXP(r, sg);
-    reportToMoWISE(r, sg, gameMode, wrongThisGame);
+    reportToMoWISE(r, sg, r.mode || gameMode, wrongs);
 
     if (newLevel > prevLevel) {
       setShowLevelUp(true);
@@ -2118,6 +2231,7 @@ export default function App(){
       gamesPlayed: prev.gamesPlayed + 1,
       streak: updateStreak(prev.streak),
     }));
+    reportToMoWISE(r, sg, '熟語テスト結果');
     setGs(GAME_STATES.IDIOM_RESULT);
   };
 
@@ -2131,11 +2245,13 @@ export default function App(){
       gamesPlayed: prev.gamesPlayed + 1,
       streak: updateStreak(prev.streak),
     }));
+    reportToMoWISE(r, sg, 'ドブル結果');
     setGs(GAME_STATES.SORTING_RESULT);
   };
 
   const handleStartReview = (questions) => {
     setSg(0);
+    setGameMode('practice'); // 復習は時間せいげんなしで、ゆっくり確かめる
     setGameKey(k => k + 1);
     setGs(GAME_STATES.PLAYING);
     setWrongThisGame([]);
@@ -2180,9 +2296,9 @@ export default function App(){
         </div>
       )}
 
-      {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onSortingSection={()=>setGs('SORTING_MENU')} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} />}
-      {gs===GAME_STATES.PLAYING&&<GameScreen key={gameKey} grade={sg} gameMode={gameMode} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
-      {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} onRetry={()=>{setWrongThisGame([]);setGameKey(k=>k+1);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
+      {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onSortingSection={()=>setGs('SORTING_MENU')} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} initialGrade={dl.grade} />}
+      {gs===GAME_STATES.PLAYING&&<GameScreen key={gameKey} grade={sg} gameMode={gameMode} questionCount={questionCount} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
+      {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} title={sg===0?'復習の結果':gr?.mode==='practice'?'れんしゅうの結果':gr?.mode==='normal'?'かくにんテストの結果':'結果発表'} onPractice={[5,4,3].includes(sg)&&gr?.mode!=='practice'?()=>handleStartGame(sg,'practice'):null} onRetry={()=>{setWrongThisGame([]);setGameKey(k=>k+1);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
       {gs===GAME_STATES.IDIOM_MENU&&<IdiomMenu onStartLearn={(g)=>{setSg(g);setGameKey(k=>k+1);setGs(GAME_STATES.IDIOM_LEARN);}} onStartTest={(g)=>{setSg(g);setGameKey(k=>k+1);setGs(GAME_STATES.IDIOM_TEST);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
       {gs===GAME_STATES.IDIOM_LEARN&&<IdiomLearnMode key={gameKey} grade={sg} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)} onFinish={(r)=>handleIdiomEnd(r)}/>}
       {gs===GAME_STATES.IDIOM_TEST&&<IdiomTestMode key={gameKey} grade={sg} onGameEnd={handleIdiomEnd} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)}/>}
