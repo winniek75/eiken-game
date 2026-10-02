@@ -35,6 +35,24 @@ npm run dev
 npm run build
 ```
 
+## 🧭 あそびかた（級をえらんだあと）
+
+1. **まなぶ・れんしゅう** … 10問・時間制限なし・音声つき（`speechSynthesis`）。答えたあと「つぎへ」で進む
+2. **かくにんテスト（ノーマル）** … 10問・1問15秒前後
+3. **タイムアタック / サバイバル** … 速さへの任意チャレンジ
+
+誤答と時間切れは別に集計し、結果画面・復習リスト・MoWISE への送信（`metadata.timeouts`、`wrongAnswers[].chosen` = `（時間切れ）`）で区別します。
+
+### URLパラメータ（ポータルからの直接起動）
+
+| パラメータ | 値 | 説明 |
+|---|---|---|
+| `grade` | `5` / `4` / `3` | 級。`grade` だけ指定するとメニューでその級が選ばれた状態で開く |
+| `mode` | `practice`（別名 `learn`）/ `normal`（別名 `check`）/ `timeattack` / `survival` / `idiom` / `idiomtest` / `dobble` | 指定するとメニューを通らず直接開始（`grade` 省略時は5級） |
+| `count` | `5`〜`30` | `practice` / `normal` の問題数（省略時10。範囲外は丸める） |
+
+例: `/?grade=5&mode=practice&count=10`、`/?grade=4&mode=normal`、`/?grade=3`
+
 ## 🎮 ゲームシステム
 
 ### スコアリング
