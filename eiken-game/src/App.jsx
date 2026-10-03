@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { buildQuestionsFromUnit } from './sharedVocab.js';
 
 // ======== localStorage 永続化 ========
 const STORAGE_KEY = 'eiken_quest_data';
@@ -2131,13 +2132,22 @@ export default function App(){
     const loaded = loadSaveData();
     return loaded || getDefaultSaveData();
   });
+  // ?unit=5-1 で FlashInput 共通語彙から出題
+  const sharedUnit = useMemo(() => {
+    const p = new URLSearchParams(window.location.search);
+    const u = p.get("unit");
+    if (!u) return null;
+    const qs = buildQuestionsFromUnit(u);
+    return qs ? { grade: u.startsWith("4-") ? 4 : 5, questions: qs } : null;
+  }, []);
+
   // URLパラメータ（?grade=5&mode=practice&count=10 など）での直接起動
   const deepLink = useRef(null);
   if (deepLink.current === null) deepLink.current = parseDeepLink();
   const dl = deepLink.current;
-  const dlState = { practice: GAME_STATES.PLAYING, normal: GAME_STATES.PLAYING, timeattack: GAME_STATES.PLAYING, survival: GAME_STATES.PLAYING, idiom: GAME_STATES.IDIOM_LEARN, idiomtest: GAME_STATES.IDIOM_TEST, dobble: GAME_STATES.SORTING }[dl.mode];
+  const dlState = sharedUnit ? GAME_STATES.PLAYING : { practice: GAME_STATES.PLAYING, normal: GAME_STATES.PLAYING, timeattack: GAME_STATES.PLAYING, survival: GAME_STATES.PLAYING, idiom: GAME_STATES.IDIOM_LEARN, idiomtest: GAME_STATES.IDIOM_TEST, dobble: GAME_STATES.SORTING }[dl.mode];
   const [gs, setGs] = useState(dlState || GAME_STATES.MENU);
-  const [sg, setSg] = useState(dl.grade || 5);
+  const [sg, setSg] = useState(sharedUnit?.grade || dl.grade || 5);
   const [gr, setGr] = useState(null);
   const [wrongThisGame, setWrongThisGame] = useState([]);
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -2297,7 +2307,7 @@ export default function App(){
       )}
 
       {gs===GAME_STATES.MENU&&<MainMenu onStartGame={handleStartGame} onIdiomSection={()=>setGs(GAME_STATES.IDIOM_MENU)} onSortingSection={()=>setGs('SORTING_MENU')} onReviewSection={()=>setGs('REVIEW')} highScores={hs} saveData={saveData} daily={daily} initialGrade={dl.grade} />}
-      {gs===GAME_STATES.PLAYING&&<GameScreen key={gameKey} grade={sg} gameMode={gameMode} questionCount={questionCount} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sg===0 ? saveData.wrongHistory : null} />}
+      {gs===GAME_STATES.PLAYING&&<GameScreen key={gameKey} grade={sg} gameMode={sharedUnit ? 'practice' : gameMode} questionCount={questionCount} onGameEnd={handleGameEnd} onExit={()=>setGs(GAME_STATES.MENU)} onWrong={trackWrong} reviewQuestions={sharedUnit?.questions || (sg===0 ? saveData.wrongHistory : null)} />}
       {gs===GAME_STATES.RESULT&&<ResultScreen result={gr} grade={sg} title={sg===0?'復習の結果':gr?.mode==='practice'?'れんしゅうの結果':gr?.mode==='normal'?'かくにんテストの結果':'結果発表'} onPractice={[5,4,3].includes(sg)&&gr?.mode!=='practice'?()=>handleStartGame(sg,'practice'):null} onRetry={()=>{setWrongThisGame([]);setGameKey(k=>k+1);setGs(GAME_STATES.PLAYING);}} onMenu={()=>{setGs(GAME_STATES.MENU);setGr(null);}} highScore={hs[sg]||0} xpEarned={gr?.score||0} saveData={saveData} />}
       {gs===GAME_STATES.IDIOM_MENU&&<IdiomMenu onStartLearn={(g)=>{setSg(g);setGameKey(k=>k+1);setGs(GAME_STATES.IDIOM_LEARN);}} onStartTest={(g)=>{setSg(g);setGameKey(k=>k+1);setGs(GAME_STATES.IDIOM_TEST);}} onBack={()=>setGs(GAME_STATES.MENU)}/>}
       {gs===GAME_STATES.IDIOM_LEARN&&<IdiomLearnMode key={gameKey} grade={sg} onExit={()=>setGs(GAME_STATES.IDIOM_MENU)} onFinish={(r)=>handleIdiomEnd(r)}/>}
