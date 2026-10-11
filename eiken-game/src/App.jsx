@@ -1801,9 +1801,9 @@ const SortingMenu = ({onStart, onBack}) => {
       <button className="absolute top-6 left-6 p-3 rounded-xl text-white hover:bg-white/10 transition-all text-2xl" onClick={onBack}>←</button>
       <div className="text-center">
         <div className="flex justify-center gap-2 mb-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white/20 shadow-lg" style={{border:'3px solid rgba(0,245,212,0.4)'}}><img src={dobbleItems[5][0].img} alt="" className="w-full h-full object-cover"/></div>
-          <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white/20 shadow-lg -ml-4 mt-2" style={{border:'3px solid rgba(255,217,61,0.4)'}}><img src={dobbleItems[5][3].img} alt="" className="w-full h-full object-cover"/></div>
-          <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white/20 shadow-lg -ml-4" style={{border:'3px solid rgba(255,107,157,0.4)'}}><img src={dobbleItems[5][8].img} alt="" className="w-full h-full object-cover"/></div>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg text-3xl" style={{border:'3px solid rgba(0,245,212,0.4)',background:'linear-gradient(135deg,#252542,#1a1a2e)'}}>{dobbleItems[5][0].emoji}</div>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg text-3xl -ml-4 mt-2" style={{border:'3px solid rgba(255,217,61,0.4)',background:'linear-gradient(135deg,#252542,#1a1a2e)'}}>{dobbleItems[5][3].emoji}</div>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg text-3xl -ml-4" style={{border:'3px solid rgba(255,107,157,0.4)',background:'linear-gradient(135deg,#252542,#1a1a2e)'}}>{dobbleItems[5][8].emoji}</div>
         </div>
         <h1 className="text-4xl font-black" style={{fontFamily:"'Noto Sans JP',sans-serif",background:'linear-gradient(135deg,#00f5d4,#ffd93d)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>ドブル英単語</h1>
         <p className="text-gray-400 mt-2" style={{fontFamily:"'Noto Sans JP',sans-serif"}}>2枚のカードから同じ単語を見つけよう！</p>
@@ -1934,11 +1934,12 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
     );
   };
 
-  // 写真アイテム（Card2用） - 読み込み失敗時はemojiフォールバック
+  // 絵文字アイテム（Card2用） - 確実に英単語と一致する
   const renderPhotoItem = (item, idx) => {
     const sz = cardSizes[5 + idx] || { scale: 1, rotate: 0 };
     const isMatch = fb && item.word === roundData.matchWord;
     const isWrong = fb?.type === 'wrong' && item.word === fb.word;
+    const emojiSize = Math.max(36, Math.min(56, 48 * sz.scale));
     return (
       <button
         key={item.word + 'p'}
@@ -1952,14 +1953,16 @@ const SortingGame = ({grade, onGameEnd, onExit}) => {
         onClick={() => handleTap(item.word)}
         disabled={!!fb}
       >
-        <div className="rounded-full overflow-hidden shadow-lg flex items-center justify-center" style={{
-          width: `${Math.max(88, Math.min(140, 120 * sz.scale))}px`,
-          height: `${Math.max(88, Math.min(140, 120 * sz.scale))}px`,
+        <div className="rounded-full overflow-hidden shadow-lg flex flex-col items-center justify-center" style={{
+          width: `${Math.max(80, Math.min(120, 100 * sz.scale))}px`,
+          height: `${Math.max(80, Math.min(120, 100 * sz.scale))}px`,
+          background: 'linear-gradient(135deg,#252542,#1a1a2e)',
           border: isMatch ? '3px solid #6bff8e' : isWrong ? '3px solid #ff6b6b' : '3px solid rgba(255,255,255,0.15)',
           boxShadow: isMatch ? '0 0 20px rgba(107,255,142,0.5)' : isWrong ? '0 0 20px rgba(255,107,107,0.5)' : '0 4px 12px rgba(0,0,0,0.4)',
           animation: isMatch ? 'pop 0.3s ease' : undefined,
         }}>
-          <img src={item.img} alt={item.meaning} className="w-full h-full object-cover" loading="eager" onError={(e) => { e.target.style.display='none'; e.target.parentElement.textContent=item.emoji||'❓'; e.target.parentElement.style.fontSize='2rem'; e.target.parentElement.style.display='flex'; e.target.parentElement.style.alignItems='center'; e.target.parentElement.style.justifyContent='center'; e.target.parentElement.style.background='linear-gradient(135deg,#252542,#1a1a2e)'; }}/>
+          <span style={{fontSize:`${emojiSize}px`,lineHeight:1}}>{item.emoji || '❓'}</span>
+          <span style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',marginTop:'2px',fontWeight:600}}>{item.meaning}</span>
         </div>
       </button>
     );
