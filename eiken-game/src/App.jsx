@@ -2288,6 +2288,48 @@ export default function App(){
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
         @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,217,61,0.3)}50%{box-shadow:0 0 40px rgba(255,217,61,0.6)}}
         *{box-sizing:border-box}body{margin:0;padding:0}
+
+        /* ── Mobile optimization (<=640px) ── */
+        @media (max-width:640px){
+          html{-webkit-text-size-adjust:100%}
+          body{font-size:14px;-webkit-overflow-scrolling:touch;overflow-x:hidden}
+          /* Touch targets */
+          button{min-height:44px}
+          /* Grade select cards */
+          .grid.grid-cols-1.md\\:grid-cols-3{gap:10px!important}
+          .grid.grid-cols-1.md\\:grid-cols-3 button{padding:16px 14px!important}
+          /* Mode select buttons */
+          button.rounded-2xl{min-height:52px}
+          button.rounded-full{min-height:44px}
+          /* Menu buttons */
+          .flex.flex-wrap.gap-3 button{padding:12px 16px!important;min-height:48px}
+          .flex.flex-wrap.gap-3 span.text-xl{font-size:16px!important}
+          /* Quiz option buttons */
+          .grid.grid-cols-2 button,
+          .grid.grid-cols-1 button{min-height:48px;font-size:14px!important}
+          /* Feedback text */
+          .text-5xl{font-size:2.5rem!important}
+          .text-6xl{font-size:2.8rem!important}
+          /* Reduce padding on mobile */
+          .p-6{padding:14px!important}
+          .p-5{padding:14px!important}
+          .px-8{padding-left:16px!important;padding-right:16px!important}
+          .py-4{padding-top:12px!important;padding-bottom:12px!important}
+          .px-6{padding-left:14px!important;padding-right:14px!important}
+          .gap-6{gap:14px!important}
+          /* Prevent horizontal overflow */
+          .min-h-screen{overflow-x:hidden;min-height:100dvh}
+          /* Input font size iOS zoom prevention */
+          input,textarea,select{font-size:16px!important}
+          /* Quiz options: stack on very small screens */
+          .grid.grid-cols-2.gap-3{gap:8px!important}
+          /* Result screen */
+          .rounded-3xl.p-10{padding:24px 16px!important}
+          .grid.grid-cols-2.gap-5{gap:10px!important}
+          .grid.grid-cols-2.gap-5 .rounded-xl{padding:12px!important}
+          /* Smooth scrolling */
+          *{-webkit-overflow-scrolling:touch}
+        }
       `}</style>
 
       {/* レベルアップ通知 */}
